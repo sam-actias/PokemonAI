@@ -16,3 +16,5 @@ class Player:
       self.stadium = None
       self.canRetreat = True
       self.canAttachEnergy = True
+      self.prizesToPick = 0
+      self.paralyzedCounter = 0

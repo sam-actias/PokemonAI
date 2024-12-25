@@ -140,7 +140,7 @@ class MewVFS250:
 
         game[player].activePokemon.burned = False
 
-        game[player].activePokemon.paralyzed = False
+        game[player].activePokemon.paralyzedCounter = 0
 
         game[player].activePokemon.poisoned = False
 
@@ -338,7 +338,7 @@ class BosssOrdersGhetsisPE265:
 
         game[opponent].activePokemon.burned = False
 
-        game[opponent].activePokemon.paralyzed = False
+        game[opponent].activePokemon.paralyzedCounter = 0
 
         game[opponent].activePokemon.poisoned = False
 
@@ -617,7 +617,7 @@ class SwitchCartAR154:
 
     game[player].activePokemon.burned = False
 
-    game[player].activePokemon.paralyzed = False
+    game[player].activePokemon.paralyzedCounter = 0
 
     game[player].activePokemon.poisoned = False
 
@@ -642,7 +642,7 @@ class EscapeRopeBS125:
 
       game[player].activePokemon.burned = False
 
-      game[player].activePokemon.paralyzed = False
+      game[player].activePokemon.paralyzedCounter = 0
 
       game[player].activePokemon.poisoned = False
 
@@ -659,7 +659,7 @@ class EscapeRopeBS125:
 
       game[opponent].activePokemon.burned = False
 
-      game[opponent].activePokemon.paralyzed = False
+      game[opponent].activePokemon.paralyzedCounter = 0
 
       game[opponent].activePokemon.poisoned = False
 

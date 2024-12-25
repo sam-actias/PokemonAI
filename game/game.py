@@ -184,7 +184,7 @@ class Game:
   def pickStartActivePokemon(self, player, handIndex):
     self[player].activePokemon = self[player].hand.pop(handIndex)
 
-  def pickBenchPokemon(self, player, handIndex)
+  def pickBenchPokemon(self, player, handIndex):
     self[player].bench.append(self[player].hand.pop(handIndex))
 
   def doTurn(self, player):
@@ -284,11 +284,9 @@ class Game:
 
     return self
   
-  def attack(self, player, moveName, attackParams):
-    if not self[player].activePokemon.asleep and not self[player].activePokemon.paralyzed:
+  def attack(self, player, opponent, moveName, attackParams):
+    if not self[player].activePokemon.asleep and self[player].activePokemon.paralyzedCounter == 0:
       self.updateSelf(self[player].activePokemon.moves[moveName]['do'](self, player, **attackParams))
-
-      return self
     elif self[player].activePokemon.confused:
       coinFlip = random.randint(0, 1)
 
@@ -296,12 +294,38 @@ class Game:
         self.updateSelf(self[player].activePokemon.moves[moveName]['do'](self, player, **attackParams))
       else:
         self[player].activePokemon.hp -= 30
+    else:
+      raise Exception('this pokemon cannot attack')
 
-      return self
-    
-    raise Exception('this pokemon cannot attack')
+    if self[player].activePokemon.hp <= 0:
+      self[opponent].prizesToPick += self[player].activePokemon.prizesWhenKnockedOut
+
+    if self[opponent].activePokemon.hp <= 0:
+      self[player].prizesToPick += self[opponent].activePokemon.prizesWhenKnockedOut
+
+    if self[player].prizesToPick >= len(self[player].prizes) and self[opponent].prizesToPick >= len(self[opponent].prizes):
+      self.winner = 'tie'
+    elif self[player].prizesToPick >= len(self[player].prizes):
+      self.winner = player
+    elif self[opponent].prizesToPick >= len(self[opponent].prizes):
+      self.winner = opponent
+
+    return self
   
+  def drawPrizes(self, player, prizeIndexes):
+    for index in prizeIndexes:
+      self[player].hand.append(self[player].prizes[index])
+
+      self[player].prizes[index] = None
+
+    self[player].prizes = self.removeNullCards(self[player].prizes)
+
+    return self
+
   def retreat(self, player, newPokemonIndex, energyToDiscard):
+    if self[player].activePokemon.asleep == True or self[player].activePokemon.paralyzedCounter > 0:
+      raise Exception('Pokemon cannot retreat if asleep or paralyzed')
+
     if len(self[player].bench) > 0:
       for energy in energyToDiscard:
         if self[player].activePokemon.attachedEnergy[energy] > 0:
@@ -318,11 +342,7 @@ class Game:
 
       self[player].activePokemon.burned = False
 
-      self[player].activePokemon.paralyzed = False
-
       self[player].activePokemon.poisoned = False
-
-      self[player].activePokemon.asleep = False
 
       self[player].activePokemon.confused = False
 
@@ -332,57 +352,48 @@ class Game:
 
     raise Exception('cannot retreat if there are no benched Pokemon')
   
-  def endTurn(self, player, opponent, opponentPrizeIndexes = None, opponentNewActivePokemonIndex = None, playerPrizeIndexes = None, playerNewActivePokemonIndex = None):
-    if self[player].activePokemon.hp <= 0:
-      for index in opponentPrizeIndexes:
-        if self[opponent].prizes[index] == None:
-          raise Exception('cannot draw a prize that isn\'t there')
-        
-        self[opponent].hand.append(self[opponent].prizes[index])
+  def endTurn(self, player, opponent, opponentNewActivePokemonIndex = None, playerAttackPrizeIndexes = None):
+    if self[player].activePokemon.poisoned:
+      self[player].activePokemon += 10
 
-        self[opponent].prizes[index] = None
+      if self[player].activePokemon.hp <= 0:
+        self[opponent].prizesToPick += self[player].activePokemon.prizesWhenKnockedOut
 
-      self[opponent].prizes = self.removeNullCards(self[opponent].prizes)
-
-      if len(self[opponent].prizes == 0):
-        if self.winner == None:
-          self.winner = opponent
-        else:
-          self.winner = 'tie'
-
-    if self[opponent].activePokemon.hp <= 0:
-      for index in playerPrizeIndexes:
-        if self[player].prizes[index] == None:
-          raise Exception('cannot draw a prize that isn\'t there')
-        
-        self[player].hand.append(self[player].prizes[index])
-
-        self[player].prizes[index] = None
-
-      self[player].prizes = self.removeNullCards(self[player].prizes)
-
-      if len(self[player].prizes == 0):
-        if self.winner == None:
-          self.winner = player
-        else:
-          self.winner = 'tie'
-
-    if self.winner:
-      return self
-      
-    if self[player].activePokemon.hp <= 0:
-      self[player].discardPile.append(self[player].activePokemon)
-
-      self[player].activePokemon = self[player].bench.pop(playerNewActivePokemonIndex)
+      if self[opponent].prizesToPick >= len(self[opponent].prizes):
+        self.winner = opponent
+        return self
     
-    if self[opponent].activePokemon.hp <= 0:
-      self[opponent].discardPile.append(self[opponent].activePokemon)
+    if self[player].activePokemon.burned:
+      self[player].activePokemon += 20
 
-      self[opponent].activePokemon = self[opponent].bench.pop(opponentNewActivePokemonIndex)
+      if self[player].activePokemon.hp <= 0:
+        self[opponent].prizesToPick += self[player].activePokemon.prizesWhenKnockedOut
 
-    if se
+      if self[opponent].prizesToPick >= len(self[opponent].prizes):
+        self.winner = opponent
+        return self
 
+    if self[player].activePokemon.asleep:
+      coinFlip = random.randint(0, 1)
 
+      if coinFlip:
+        self[player].activePokemon.asleep = False
+      
+    if self[player].activePokemon.paralyzedCounter == 1:
+      self[player].activePokemon.paralyzedCounter += 1
+    if self[player].activePokemon.paralyzedCounter == 2:
+      self[player].activePokemon.paralyzedCounter = 0
+
+    return self
+
+  def pickNewActivePokemonFromBench(self, player, opponent, pokemonIndex):
+    if len(self[player].bench) == 0:
+      self.winner = opponent
+      return self
+    
+    self[player].activePokemon = self[player].bench.pop(pokemonIndex)
+
+    return self
 
   def updateSelf(self, changedGame):
     self[self.player1Name] = changedGame[self.player1Name]
