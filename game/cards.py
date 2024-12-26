@@ -23,13 +23,15 @@ class MewVmaxFS268:
         'do': self.crossFusionStrike,
         'energyRequirement': {
           EnergyType.Colorless: 2
-        }
+        },
+        'text': 'Choose 1 of your Benched Fusion Strike Pokémon\'s attacks and use it as this attack.'
       },
       'maxMiracle': {
         'do': self.maxMiracle,
         'energyRequirement': {
           EnergyType.Psychic: 2
-        }
+        },
+        'text': 'This attack\'s damage isn\'t affected by any effects on your opponent\'s Active Pokémon.'
       }
     }
     self.attachedEnergy = {
@@ -76,7 +78,8 @@ class MewVFS250:
         'do': self.energyMix,
         'energyRequirement': {
           EnergyType.Psychic: 1
-        }
+        },
+        'text': 'Search your deck for an Energy card and attach it to 1 of your Fusion Strike Pokémon. Then, shuffle your deck.'
       },
       'psychicLeap': {
         'name': 'Psychic Leap',
@@ -84,7 +87,8 @@ class MewVFS250:
         'energyRequirement': {
           EnergyType.Psychic: 1,
           EnergyType.Colorless: 1
-        }
+        },
+        'text': 'You may shuffle this Pokémon and all attached cards into your deck.'
       }
     }
     self.attachedEnergy = {
@@ -178,7 +182,8 @@ class GenesectVFS255:
     self.ability = {
       'name': 'FusionStrikeSystem',
       'do': self.fusionStrikeSystem,
-      'usedFlag': False
+      'usedFlag': False,
+      'text': 'Once during your turn, you may draw cards until you have as many cards in your hand as you have Fusion Strike Pokémon in play.'
     }
     self.moves = {
       'technoBlast': {
@@ -186,7 +191,8 @@ class GenesectVFS255:
         'EnergyRequirement': {
           EnergyType.Metal: 2,
           EnergyType.Colorless: 1
-        }
+        },
+        'text': 'During your next turn, this Pokémon can\'t attack.'
       }
     }
     self.attachedEnergy = {
@@ -253,7 +259,8 @@ class MeloettaFS124:
         'EnergyRequirement': {
           EnergyType.Psychic: 1,
           EnergyType.Colorless: 1
-        }
+        },
+        'text': 'This attack does 70 damage for each Fusion Strike Energy attached to all of your Pokémon.'
       }
     }
     self.attachedEnergy = {
@@ -290,13 +297,18 @@ class OricorioFS42:
     self.retreatCost = 1
     self.prizesWhenKnockedOut = 1
     self.fusionStrike = True
+    self.ability = {
+      'name': 'LessonInZeal',
+      'text': 'All of your Fusion Strike Pokémon take 20 less damage from attacks from your opponent\'s Pokémon (after applying Weakness and Resistance). You can\'t apply more than 1 Lesson in Zeal Ability at a time.'
+    }
     self.moves = {
       'glisteningDroplets': {
         'do': self.glisteningDroplets,
         'EnergyRequirement': {
           EnergyType.Fire: 1,
           EnergyType.Colorless: 1
-        }
+        },
+        'text': 'Put 5 damage counters on your opponent\'s Pokémon in any way you like.'
       }
     }
     self.attachedEnergy = {
@@ -330,6 +342,7 @@ class BosssOrdersGhetsisPE265:
   def __init__(self):
     self.cardType = CardType.Supporter
     self.name = 'BosssOrdersGhetsisPE265'
+    self.text = 'Switch in 1 of your opponent\'s Benched Pokémon to the Active Spot.'
 
   def effect(self, game, player, opponent, benchedPokemonIndex):
     if game[player].canUseSupporter == True:
@@ -360,6 +373,7 @@ class ElesasSparkleFS260:
   def __init__(self):
     self.cardType = CardType.Supporter
     self.name = 'ElesasSparkleFS260'
+    self.text = 'Choose up to 2 of your Fusion Strike Pokémon. For each of those Pokémon, search your deck for a Fusion Strike Energy card and attach it to that Pokémon. Then, shuffle your deck.'
 
   def effect(self, game, player, pokemon1Location, pokemon1Index = None, pokemon2Location = None, pokemon2Index = None):
     if game[player].canUseSupporter == True:
@@ -397,7 +411,8 @@ class ElesasSparkleFS260:
 class IonoPE269:
   def __init__(self):
     self.cardType = CardType.Supporter
-    self.name = "IonoPE269"
+    self.name = 'IonoPE269'
+    self.text = 'Each player shuffles their hand and puts it on the bottom of their deck. If either player put any cards on the bottom of their deck in this way, each player draws a card for each of their remaining Prize cards.'
 
   def effect(self, game, player, opponent):
     if game[player].canUseSupporter == True:
@@ -426,7 +441,8 @@ class IonoPE269:
 class JudgeSAV176:
   def __init__(self):
     self.cardType = CardType.Supporter
-    self.name = "JudgeSAV176"
+    self.name = 'JudgeSAV176'
+    self.text = 'Each player shuffles their hand into their deck and draws 4 cards.'
 
   def effect(self, game, player, opponent):
     if game[player].canUseSupporter == True:
@@ -460,11 +476,13 @@ class LostCityLO161:
   def __init__(self):
     self.cardType = CardType.Stadium
     self.name = 'LostCityLO161'
+    self.text = 'Whenever a Pokémon (either yours or your opponent\'s) is Knocked Out, put that Pokémon in the Lost Zone instead of the discard pile. (Discard all attached cards.)'
 
 class CrystalCaveES230:
   def __init__(self):
     self.cardType = CardType.Stadium
     self.name = 'CrystalCaveES230'
+    self.text = 'Once during each player\'s turn, that player may heal 30 damage from each of their Metal Pokémon and Dragon Pokémon.'
 
   def effect(self, game, player):
     if game[player].activePokemon.type == EnergyType.Metal or game[player].activePokemon.type == EnergyType.Dragon:
@@ -486,6 +504,7 @@ class PathToThePeakCR148:
   def __init__(self):
     self.cardType = CardType.Stadium
     self.name = 'PathToThePeakCR148'
+    self.text = 'Pokémon with a Rule Box in play (both yours and your opponent\'s) have no Abilities. (Pokémon V, Pokémon-GX, etc. have Rule Boxes.)'
 
 class BattleVipPassFS225:
   def __init__(self):
@@ -705,8 +724,12 @@ class ForestSealStoneST156:
     self.cardType = CardType.Tool
     self.name = 'ForestSealStoneST156'
 
-  def useAbility(self, game, player, cardDeckIndex):
+  def useAbility(self, game, player, opponent, cardDeckIndex):
     if game[player].canUseVstarPower == True:
+      if (game[player].stadium and game[player].stadium.name == 'PathToThePeakCR148') or (game[opponent].stadium 
+                                                          and game[opponent].stadium.name == 'PathToThePeakCR148'):
+        raise Exception('because of stadium Path to the Peak, this Pokemon V has no abilities')
+      
       game[player].canUseVstarPower = False
 
       game[player].hand.append(game[player].deck.pop(cardDeckIndex))

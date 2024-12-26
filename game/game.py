@@ -250,9 +250,11 @@ class Game:
     
   def playTool(self, player, handIndex, pokemonLocation, pokemonIndex = None):
     if pokemonLocation == 'activePokemon' and not self[player].activePokemon.tool:
-      self[player].activePokemon.tool = self[player].hand[handIndex]
+      if self[player].activePokemon.isV == True or self[player].hand[handIndex].name != 'PathToThePeakCR148':
+        self[player].activePokemon.tool = self[player].hand[handIndex]
     elif not self[player].bench[pokemonIndex].tool:
-      self[player].bench[pokemonIndex].tool = self[player].hand[handIndex]
+      if self[player].bench[pokemonIndex].isV == True or self[player].hand[handIndex].name != 'PathToThePeakCR148':
+        self[player].bench[pokemonIndex].tool = self[player].hand[handIndex]
     else:
       raise Exception('Cannot add tool to Pokemon that already had a tool')
     
