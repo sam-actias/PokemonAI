@@ -143,7 +143,7 @@ class Game:
       for card in player2StartHand:
         self.players[self.player2Name].deck.append(card)
 
-      return self.startGame()
+      self.startGame()
     elif not player1HasBasic:
       player1StartHand, mulliganCount = self.mulligan(self.player1Name, player1StartHand)
 
@@ -159,8 +159,6 @@ class Game:
 
     self.players[self.player1Name].hand = player1StartHand
     self.players[self.player2Name].hand = player2StartHand
-
-    return self
 
   def mulligan(self, player, previousHand, mulliganCount = 0):
     # show hand
@@ -201,8 +199,6 @@ class Game:
       # insert lose actions
 
     self.players[player].hand.append(self.players[player].deck.pop())
-
-    return self
   
   def playBasicPokemon(self, player, handIndex, playLocation):
     if playLocation == 'activePokemon' and self.players[player].activePokemon == None:
@@ -211,8 +207,6 @@ class Game:
       self.players[player].bench.append(self.players[player].hand.pop(handIndex))
     else:
       raise Exception('can\'t play a pokemon there')
-    
-    return self
   
   def evolvePokemon(self, player, handIndex, formerPokemonLocation, formerPokemonIndex):
     if formerPokemonLocation == 'activePokemon':
@@ -221,8 +215,6 @@ class Game:
     else:
       if self.players[player].bench[formerPokemonIndex].name == self.players[player].hand[handIndex].evolvesFrom:
         self.players[player].bench[formerPokemonIndex] = self.players[player].hand.pop(handIndex)
-
-    return self
 
   def playItem(self, player, handIndex, effectParams):
     itemCard = self.players[player].hand[handIndex]
@@ -234,8 +226,6 @@ class Game:
     self.players[player].discardPile.append(itemCard)
 
     self.players[player].hand = self.removeNullCards(self.players[player].hand)
-
-    return self
   
   def playSupporter(self, player, handIndex, effectParams):
     if self.players[player].canUseSupporterFlag == True:
@@ -250,8 +240,6 @@ class Game:
       self.players[player].discardPile.append(supporterCard)
 
       self.players[player].hand = self.removeNullCards(self.players[player].hand)
-
-      return self
     
     raise Exception('cannot play more than one supporter per turn')
     
@@ -264,8 +252,6 @@ class Game:
         self.players[player].bench[pokemonIndex].tool = self.players[player].hand[handIndex]
     else:
       raise Exception('Cannot add tool to Pokemon that already had a tool')
-    
-    return self
     
   def useToolAbility(self, player, effectParams, pokemonLocation, pokemonIndex = None):
     if pokemonLocation == 'activePokemon' and self.players[player].activePokemon.tool:
@@ -282,16 +268,12 @@ class Game:
       self.players[opponent].stadium =None
 
     self.players[player].stadium = self.players[player].hand.pop(handIndex)
-
-    return self
   
   def usePokemonAbility(self, player, abilityParams, pokemonLocation, pokemonIndex = None):
     if pokemonLocation == 'activePokemon':
       self.updateSelf(self.players[player].activePokemon.ability['do'](self, player, **abilityParams))
     else:
       self.updateSelf(self.players[player].bench[pokemonIndex].ability['do'](self, player, **abilityParams))
-
-    return self
   
   def attack(self, player, opponent, moveName, attackParams):
     if not self.players[player].activePokemon.asleep and self.players[player].activePokemon.paralyzedCounter == 0:
@@ -318,8 +300,6 @@ class Game:
       self.winner = player
     elif self.players[opponent].prizesToPick >= len(self.players[opponent].prizes):
       self.winner = opponent
-
-    return self
   
   def drawPrizes(self, player, prizeIndexes):
     for index in prizeIndexes:
@@ -328,8 +308,6 @@ class Game:
       self.players[player].prizes[index] = None
 
     self.players[player].prizes = self.removeNullCards(self.players[player].prizes)
-
-    return self
 
   def retreat(self, player, newPokemonIndex, energyToDiscard):
     if self.players[player].activePokemon.asleep == True or self.players[player].activePokemon.paralyzedCounter > 0:
@@ -370,7 +348,7 @@ class Game:
 
       if self.players[opponent].prizesToPick >= len(self.players[opponent].prizes):
         self.winner = opponent
-        return self
+        return
     
     if self.players[player].activePokemon.burned:
       self.players[player].activePokemon += 20
@@ -380,7 +358,7 @@ class Game:
 
       if self.players[opponent].prizesToPick >= len(self.players[opponent].prizes):
         self.winner = opponent
-        return self
+        return
 
     if self.players[player].activePokemon.asleep:
       coinFlip = random.randint(0, 1)
@@ -393,16 +371,12 @@ class Game:
     if self.players[player].activePokemon.paralyzedCounter == 2:
       self.players[player].activePokemon.paralyzedCounter = 0
 
-    return self
-
   def pickNewActivePokemonFromBench(self, player, opponent, pokemonIndex):
     if len(self.players[player].bench) == 0:
       self.winner = opponent
-      return self
+      return
     
     self.players[player].activePokemon = self.players[player].bench.pop(pokemonIndex)
-
-    return self
 
   def updateSelf(self, changedGame):
     self.players[self.player1Name] = changedGame[self.player1Name]

@@ -1,26 +1,35 @@
 from game import Game
 from enums import Stage, EnergyType, CardType
+from naiveAI import naiveAiChoose
 
 def printGameBoard(game):
   print('SYLVIA')
-  player2PrizeAmt = len(game['SYLVIA'].prizes)
-  print(f'Prizes: {player2PrizeAmt}')
+  print(f'Prizes: {len(game.players['SYLVIA'].prizes)}')
+  print('ACTIVE POKEMON')
+  print(f'0   {game.players['SYLVIA'].activePokemon.name}')
+  print('BENCH POKEMON')
+  if len(game.players['SYLVIA'].bench) == 0:
+    print('none')
+  for index, pokemon in enumerate(game.players['SYLVIA'].bench):
+    print(f'{index + 1}   {pokemon.name}')
+  
 
-def pickActivePokemon():
-  print('Pick a Basic Pokemon from your hand to be your active Pokemon')
+def pickActivePokemon(game):
+  print('\nPick a Basic Pokemon from your hand to be your active Pokemon')
   availableBasicPokemon = []
+  availableBasicPokemonIndexes = []
 
-  for card in game.players[player1Name].hand:
-    print(card.name)
+  for index, card in enumerate(game.players[player1Name].hand):
     if card.cardType == CardType.Pokemon and card.stage == Stage.Basic:
       availableBasicPokemon.append(card)
+      availableBasicPokemonIndexes.append(index)
 
   for index, pokemon in enumerate(availableBasicPokemon):
     print(f'{index}   {pokemon.name}')
 
   print('Commands:')
   print('details {x}: card details')
-  print('pick {x}: pick a card')
+  print('pick {x}: pick a card\n')
 
   text = input()
   
@@ -28,15 +37,53 @@ def pickActivePokemon():
 
   if text[0] == 'details':
     printPokemon(availableBasicPokemon[int(text[1])])
-    pickActivePokemon()
+    pickActivePokemon(game)
   elif text[0] == 'pick':
-    # pick pokemon
-    print('coming later')
+    return availableBasicPokemonIndexes[int(text[1])]
   else:
-    print('What?')
+    print('What?\n')
+    pickActivePokemon(game)
+
+def pickBenchPokemon(game):
+  print('\nPick a Basic Pokemon from your hand to be on your bench (up to 5 Pokemon).')
+  availableBasicPokemon = []
+  availableBasicPokemonIndexes = []
+
+  for index, card in enumerate(game.players[player1Name].hand):
+    if card.cardType == CardType.Pokemon and card.stage == Stage.Basic:
+      availableBasicPokemon.append(card)
+      availableBasicPokemonIndexes.append(index)
+
+  print('0   DONE')
+
+  for index, pokemon in enumerate(availableBasicPokemon):
+    print(f'{index + 1}   {pokemon.name}')
+
+
+  print('Commands:')
+  print('details {x}: card details')
+  print('pick {x}: pick a card\n')
+
+  text = input()
+  
+  text = text.split()
+
+  if text[0] == 'details':
+    if int(text[1]) == 0:
+      print('What?\n')
+      pickBenchPokemon(game)
+    printPokemon(availableBasicPokemon[int(text[1])])
+    pickBenchPokemon(game)
+  elif text[0] == 'pick':
+    if int(text[1]) == 0:
+      return None
+    return availableBasicPokemonIndexes[int(text[1])]
+  else:
+    print('What?\n')
+    pickBenchPokemon(game)
 
 def printPokemon(pokemon):
-  print(f'Name: {pokemon.name}')
+  print(f'\nName: {pokemon.name}')
   print('Card Type: Pokemon')
   print(f'Stage: {pokemon.stage}')
   if pokemon.evolvesFrom:
@@ -83,11 +130,11 @@ print(f'Hi? I\'m {player2Name}. What\'s your name?')
 
 player1Name = input()
 
-print(f'Hi {player1Name}! Want to play Pokemon cards?')
+print(f'\nHi {player1Name}! Want to play Pokemon cards?')
 
 input()
 
-print('Okay, let\'s start')
+print('\nOkay, let\'s start')
 
 game = Game(player1Name, player2Name)
 
@@ -109,4 +156,47 @@ elif len(game.players['SYLVIA'].hand) > 7:
 
   print(f'I drew {extraCards} extra card(s) because of your mulligans')
 
-pickActivePokemon()
+availableBasicPokemon = []
+availableBasicPokemonIndexes = []
+
+for index, card in enumerate(game.players[player1Name].hand):
+  if card.cardType == CardType.Pokemon and card.stage == Stage.Basic:
+    availableBasicPokemon.append(card)
+    availableBasicPokemonIndexes.append(index)
+
+chosenActivePokemonIndex = naiveAiChoose(availableBasicPokemon)
+
+game.players['SYLVIA'].activePokemon = game.players['SYLVIA'].hand.pop(availableBasicPokemonIndexes[chosenActivePokemonIndex])
+
+for i in range(6):
+  if game.players['SYLVIA'].hand[6 - i].cardType == CardType.Pokemon and game.players['SYLVIA'].hand[6 - i].stage == Stage.Basic:
+    choose = naiveAiChoose([False, True])
+    if choose:
+      game.players['SYLVIA'].bench.append(game.players['SYLVIA'].hand.pop(6 - i))
+
+availableBasicPokemon = []
+availableBasicPokemonIndexes = []
+
+for index, card in enumerate(game.players[player1Name].hand):
+  if card.cardType == CardType.Pokemon and card.stage == Stage.Basic:
+    availableBasicPokemon.append(card)
+    availableBasicPokemonIndexes.append(index)
+
+if len(availableBasicPokemon) > 0:  
+  for i in range(len(availableBasicPokemonIndexes)):
+    choose = naiveAiChoose([False, True])
+    if choose:
+      game.players['SYLVIA'].bench.append(game.players['SYLVIA'].hand.pop(availableBasicPokemonIndexes[len(availableBasicPokemonIndexes) - 1 - i]))
+      if len(game.players['SYLVIA'].bench) == 5:
+        break
+
+game.players[player1Name].activePokemon = game.players[player1Name].hand.pop(pickActivePokemon(game))
+
+for i in range(6):
+  pickedPokemonIndex = pickBenchPokemon(game)
+  if pickedPokemonIndex == None:
+    break
+  game.players[player1Name].bench.append(game.players[player1Name].hand.pop(pickedPokemonIndex))
+
+
+
