@@ -18,6 +18,7 @@ class MewVmaxFS268:
     self.evolvesFrom = 'Mew V'
     self.fusionStrike = True
     self.isV = True
+    self.tool = None
     self.burned = False
     self.poisoned = False
     self.paralyzed = False
@@ -27,6 +28,7 @@ class MewVmaxFS268:
       'crossFusionStrike': {
         'name': 'Cross Fusion Strike',
         'do': self.crossFusionStrike,
+        'canDo': self.canDoCrossFusionStrike,
         'energyRequirement': {
           EnergyType.Colorless: 2,
           EnergyType.Psychic: 0,
@@ -59,6 +61,16 @@ class MewVmaxFS268:
 
     return game.players[player].bench[benchedPokemonIndex].moves[moveIndex].do(**moveInput)
   
+  def canDoCrossFusionStrike(self, game, player):
+    canDo = False
+
+    for pokemone in game.players[player].bench:
+      if pokemone.fusionStrike == True:
+        canDo = True
+        break
+    
+    return canDo
+  
   def maxMiracle(self, game, player, opponent):
     if not game.energyForAttackCheck(game.players[player].activePokemon.attachedEnergy, self.moves['maxMiracle']['energyRequirement']):
       raise Exception('Not enough energy for move Max Miracle')
@@ -87,6 +99,7 @@ class MewVFS250:
     self.evolvesFrom = None
     self.fusionStrike = True
     self.isV = True
+    self.tool = None
     self.burned = False
     self.poisoned = False
     self.paralyzed = False
@@ -206,6 +219,7 @@ class GenesectVFS255:
     self.evolvesFrom = None
     self.fusionStrike = True
     self.isV = True
+    self.tool = None
     self.burned = False
     self.poisoned = False
     self.paralyzed = False
@@ -291,6 +305,7 @@ class MeloettaFS124:
     self.evolvesFrom = None
     self.fusionStrike = True
     self.isV = False
+    self.tool = None
     self.burned = False
     self.poisoned = False
     self.paralyzed = False
@@ -348,6 +363,7 @@ class OricorioFS42:
     self.evolvesFrom = None
     self.fusionStrike = True
     self.isV = False
+    self.tool = None
     self.burned = False
     self.poisoned = False
     self.paralyzed = False

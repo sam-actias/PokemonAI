@@ -109,6 +109,13 @@ class Game:
     return newDeck
   
   def startGame(self):
+    choose = random.randint(0, 1)
+
+    if choose == 1:
+      self.goesFirst = self.player1Name
+    else:
+      self.goesFirst = self.player2Name
+
     self.players[self.player1Name].deck = self.shuffle(self.players[self.player1Name].deck)
     self.players[self.player2Name].deck = self.shuffle(self.players[self.player2Name].deck)
 
@@ -160,6 +167,8 @@ class Game:
     self.players[self.player1Name].hand = player1StartHand
     self.players[self.player2Name].hand = player2StartHand
 
+    self.pickPrizeCards()
+
   def mulligan(self, player, previousHand, mulliganCount = 0):
     # show hand
     mulliganCount += 1
@@ -192,11 +201,8 @@ class Game:
   def pickBenchPokemon(self, player, handIndex):
     self.players[player].bench.append(self.players[player].hand.pop(handIndex))
 
-  def doTurn(self, player):
+  def startTurn(self, player):
     self.players[player].activeTurn += 1
-
-    # if len(self.players[player].deck) == 0:
-      # insert lose actions
 
     self.players[player].hand.append(self.players[player].deck.pop())
   
@@ -260,14 +266,24 @@ class Game:
       self.players[player].bench[pokemonIndex].tool.useAbility(self, player, **effectParams)
 
   def playStadium(self, player, opponent, handIndex):
-    if self.players[player].stadium:
-      self.players[player].discardPile.append(self.players[player].stadium)
-      self.players[player].stadium = None
-    elif self.players[opponent].stadium:
-      self.players[opponent].discardPile.append(self.players[opponent].stadium)
-      self.players[opponent].stadium =None
+    if self.players[player].canPlayStadiumFlag == True:
+      if self.players[player].stadium:
+        self.players[player].discardPile.append(self.players[player].stadium)
+        self.players[player].stadium = None
+      elif self.players[opponent].stadium:
+        self.players[opponent].discardPile.append(self.players[opponent].stadium)
+        self.players[opponent].stadium =None
+      
+      self.players[player].stadium = self.players[player].hand.pop(handIndex)
 
-    self.players[player].stadium = self.players[player].hand.pop(handIndex)
+      self.players[player].canPlayStadiumFlag = False
+
+    raise Exception('Can\'t play a Supporter more than once in a single turn')
+  
+  def attachEnergy(self, player, energyHandIndex, pokemonLocation, pokemonIndex = None):
+    energyCard = self.players[player].hand.pop(energyHandIndex)
+
+    self = energyCard.attach(self, player, pokemonLocation, pokemonIndex)
   
   def usePokemonAbility(self, player, abilityParams, pokemonLocation, pokemonIndex = None):
     if pokemonLocation == 'activePokemon':
@@ -276,7 +292,7 @@ class Game:
       self.updateSelf(self.players[player].bench[pokemonIndex].ability['do'](self, player, **abilityParams))
   
   def attack(self, player, opponent, moveName, attackParams):
-    if not self.players[player].activePokemon.asleep and self.players[player].activePokemon.paralyzedCounter == 0:
+    if not self.players[player].activePokemon.asleep and self.players[player].activePokemon.paralyzedCounter == 0 and self.players[player].activePokemonCantAttack == 0:
       self.updateSelf(self.players[player].activePokemon.moves[moveName]['do'](self, player, **attackParams))
     elif self.players[player].activePokemon.confused:
       coinFlip = random.randint(0, 1)
@@ -337,6 +353,8 @@ class Game:
 
       self.players[player].activePokemon = newPokemon
 
+      self.players[player].canRetreat = False
+
     raise Exception('cannot retreat if there are no benched Pokemon')
   
   def endTurn(self, player, opponent, opponentNewActivePokemonIndex = None, playerAttackPrizeIndexes = None):
@@ -371,12 +389,30 @@ class Game:
     if self.players[player].activePokemon.paralyzedCounter == 2:
       self.players[player].activePokemon.paralyzedCounter = 0
 
+    if self.players[player].activePokemonCantAttack == 1:
+      self.players[player].activePokemonCantAttack = 2
+    if self.players[player].activePokemonCantAttack == 2:
+      self.players[player].activePokemonCantAttack = 0
+
+    self.players[player].canUseSupporterFlag = True
+    self.players[player].canPlayStadiumFlag = True
+    self.players[player].playedPowerTabletFlag = False
+    self.players[player].canRetreat = True
+    self.players[player].canAttachEnergy = True
+
   def pickNewActivePokemonFromBench(self, player, opponent, pokemonIndex):
     if len(self.players[player].bench) == 0:
       self.winner = opponent
       return
     
     self.players[player].activePokemon = self.players[player].bench.pop(pokemonIndex)
+
+  def pickPrizeCards(self):
+    for i in range(6):
+      self.players[self.player1Name].prizes.append(self.players[self.player1Name].deck.pop())
+
+    for i in range(6):
+      self.players[self.player2Name].prizes.append(self.players[self.player2Name].deck.pop())
 
   def updateSelf(self, changedGame):
     self.players[self.player1Name] = changedGame[self.player1Name]
