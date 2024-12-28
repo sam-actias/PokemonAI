@@ -55,11 +55,11 @@ class MewVmaxFS268:
       EnergyType.Water: 0
     }
 
-  def crossFusionStrike(self, game, player, benchedPokemonIndex, moveIndex, moveInput):
+  def crossFusionStrike(self, game, player, benchedPokemonIndex, move, moveInput):
     if not game.energyForAttackCheck(game.players[player].activePokemon.attachedEnergy, self.moves['crossFusionStrike']['energyRequirement']):
       raise Exception('Not enough energy for move Cross Fusion Strike')
 
-    return game.players[player].bench[benchedPokemonIndex].moves[moveIndex].do(**moveInput)
+    return game.players[player].bench[benchedPokemonIndex].moves[move].do(**moveInput)
   
   def canDoCrossFusionStrike(self, game, player):
     canDo = False
@@ -136,7 +136,7 @@ class MewVFS250:
       EnergyType.Water: 0
     }
 
-  def energyMix(self, game, player, deckIndex, pokemonIndex):
+  def energyMix(self, game, player, deckIndex, pokemonLocation, pokemonIndex):
     if not game.energyForAttackCheck(game.players[player].activePokemon.attachedEnergy, self.moves['energyMix']['energyRequirement']):
       raise Exception('Not enough energy for move Energy Mix')
     # provide an index for the energy card in the deck
@@ -144,7 +144,7 @@ class MewVFS250:
 
     card = game.players[player].deck.pop(deckIndex)
 
-    if pokemonIndex < 6:
+    if pokemonLocation != 'activePokemon':
       if game.players[player].bench[pokemonIndex].fusionStrike:
         game.players[player].bench[pokemonIndex].attachedEnergy[card.energyType] += 1
       else:
