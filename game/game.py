@@ -307,16 +307,48 @@ class Game:
     if self.players[player].activePokemon.hp <= 0:
       self.players[opponent].prizesToPick += self.players[player].activePokemon.prizesWhenKnockedOut
 
+      if self.players[opponent].stadium.name == 'Lost City' or self.players[player].stadium.name == 'Lost City':
+        self.players[player].lostZone.append(self.players[player].activePokemon)
+      else:
+        self.players[player].discardPile.append(self.players[player].activePokemon)
+      
+      self.players[player].activePokemon = None
+
     if self.players[opponent].activePokemon.hp <= 0:
       self.players[player].prizesToPick += self.players[opponent].activePokemon.prizesWhenKnockedOut
 
-    for pokemon in self.players[player].bench:
+      if self.players[opponent].stadium.name == 'Lost City' or self.players[player].stadium.name == 'Lost City':
+        self.players[opponent].lostZone.append(self.players[opponent].activePokemon)
+      else:
+        self.players[opponent].discardPile.append(self.players[opponent].activePokemon)
+      
+      self.players[opponent].activePokemon = None
+
+    for index, pokemon in enumerate(self.players[player].bench):
       if pokemon.hp <= 0:
         self.players[opponent].prizesToPick += pokemon.prizesWhenKnockedOut
+
+        if self.players[opponent].stadium.name == 'Lost City' or self.players[player].stadium.name == 'Lost City':
+          self.players[player].lostZone.append(pokemon)
+        else:
+          self.players[player].discardPile.append(pokemon)
+        
+        self.players[player].bench[index] = None
+
+    self.players[player].bench = self.removeNullCards(self.players[player].bench)
 
     for pokemon in self.players[opponent].bench:
       if pokemon.hp <= 0:
         self.players[player].prizesToPick += pokemon.prizesWhenKnockedOut
+
+        if self.players[opponent].stadium.name == 'Lost City' or self.players[player].stadium.name == 'Lost City':
+          self.players[opponent].lostZone.append(self.players[opponent].activePokemon)
+        else:
+          self.players[opponent].discardPile.append(self.players[opponent].activePokemon)
+        
+        self.players[opponent].activePokemon = None
+
+    self.players[opponent].bench = self.removeNullCards(self.players[opponent].bench)
 
     if self.players[player].prizesToPick >= len(self.players[player].prizes) and self.players[opponent].prizesToPick >= len(self.players[opponent].prizes):
       self.winner = 'tie'
@@ -363,28 +395,44 @@ class Game:
 
       self.players[player].canRetreat = False
 
+      self.players[player].activePokemonCantAttack = 0
+
     raise Exception('cannot retreat if there are no benched Pokemon')
   
-  def endTurn(self, player, opponent, opponentNewActivePokemonIndex = None, playerAttackPrizeIndexes = None):
+  def endTurn(self, player, opponent):
     if self.players[player].activePokemon.poisoned:
       self.players[player].activePokemon += 10
 
       if self.players[player].activePokemon.hp <= 0:
         self.players[opponent].prizesToPick += self.players[player].activePokemon.prizesWhenKnockedOut
 
-      if self.players[opponent].prizesToPick >= len(self.players[opponent].prizes):
-        self.winner = opponent
-        return
-    
+        if self.players[opponent].prizesToPick >= len(self.players[opponent].prizes):
+          self.winner = opponent
+          return
+
+        if self.players[opponent].stadium.name == 'Lost City' or self.players[player].stadium.name == 'Lost City':
+          self.players[player].lostZone.append(self.players[player].activePokemon)
+        else:
+          self.players[player].discardPile.append(self.players[player].activePokemon)
+        
+        self.players[player].activePokemon = None
+
     if self.players[player].activePokemon.burned:
       self.players[player].activePokemon += 20
 
       if self.players[player].activePokemon.hp <= 0:
         self.players[opponent].prizesToPick += self.players[player].activePokemon.prizesWhenKnockedOut
 
-      if self.players[opponent].prizesToPick >= len(self.players[opponent].prizes):
-        self.winner = opponent
-        return
+        if self.players[opponent].prizesToPick >= len(self.players[opponent].prizes):
+          self.winner = opponent
+          return
+        
+        if self.players[opponent].stadium.name == 'Lost City' or self.players[player].stadium.name == 'Lost City':
+          self.players[player].lostZone.append(self.players[player].activePokemon)
+        else:
+          self.players[player].discardPile.append(self.players[player].activePokemon)
+        
+        self.players[player].activePokemon = None
 
     if self.players[player].activePokemon.asleep:
       coinFlip = random.randint(0, 1)

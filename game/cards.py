@@ -40,6 +40,7 @@ class MewVmaxFS268:
       'maxMiracle': {
         'name': 'Max Miracle',
         'do': self.maxMiracle,
+        'canDo': self.canDoMaxMiracle,
         'energyRequirement': {
           EnergyType.Colorless: 0,
           EnergyType.Psychic: 2,
@@ -81,6 +82,9 @@ class MewVmaxFS268:
 
     return game
   
+  def canDoMaxMiracle():
+    return True
+  
 class MewVFS250:
   def __init__(self):
     self.cardType = CardType.Energy
@@ -109,6 +113,7 @@ class MewVFS250:
       'energyMix': {
         'name': 'Energy Mix',
         'do': self.energyMix,
+        'canDo': self.canDoEnergyMix,
         'energyRequirement': {
           EnergyType.Colorless: 0,
           EnergyType.Psychic: 1,
@@ -156,6 +161,9 @@ class MewVFS250:
         raise Exception('cannot use Mew V\'s Energy Mix on a non-Fusion Strike Pokemon')
       
     return game
+  
+  def canDoEnergyMix(game, player):
+    return True
       
   def psychicLeap(self, game, player, opponent, shuffleIn, newActivePokemonIndex = None):
     if not game.energyForAttackCheck(game.players[player].activePokemon.attachedEnergy, self.moves['psychicLeap']['energyRequirement']):
@@ -201,6 +209,9 @@ class MewVFS250:
     
     return game
   
+  def canDoPsychicLeap():
+    return True
+  
 class GenesectVFS255:
   def __init__(self):
     self.cardType = CardType.Pokemon
@@ -228,6 +239,7 @@ class GenesectVFS255:
     self.ability = {
       'name': 'Fusion Strike System',
       'do': self.fusionStrikeSystem,
+      'canDo': self.canDoFusionStrikeSystem,
       'usedFlag': False,
       'text': 'Once during your turn, you may draw cards until you have as many cards in your hand as you have Fusion Strike Pokémon in play.'
     }
@@ -235,6 +247,7 @@ class GenesectVFS255:
       'technoBlast': {
         'name': 'Techno Blast',
         'do': self.technoBlast,
+        'canDo': self.canDoTechnoBlast,
         'energyRequirement': {
           EnergyType.Colorless: 1,
           EnergyType.Psychic: 0,
@@ -274,6 +287,21 @@ class GenesectVFS255:
     
     raise Exception("Cannot use ability Fusion Strike System while Path To The Peak is the stadium in play")
   
+  def canDoFusionStrikeSystem(game, player):
+    fusionStrikePokemonAmt = 0
+
+    if game.players[player].activePokemon.fusionStrike:
+      fusionStrikePokemonAmt += 1
+
+    for pokemon in game.players[player].bench:
+      if pokemon.fusionStrike:
+        fusionStrikePokemonAmt += 1
+
+    if fusionStrikePokemonAmt > len(game.players[player].hand):
+      return True
+    
+    return False
+
   def technoBlast(self, game, player, opponent):
     if not game.energyForAttackCheck(game.players[player].activePokemon.attachedEnergy, self.moves['technoBlast']['energyRequirement']):
       raise Exception('Not enough energy for move Techno Blast')
@@ -286,6 +314,9 @@ class GenesectVFS255:
       raise Exception('Genesect V cannot attack right now due to the rules of a move')
     
     return game
+  
+  def canDoTechnoBlast():
+    return True
     
 class MeloettaFS124:
   def __init__(self):
@@ -315,6 +346,7 @@ class MeloettaFS124:
       'melodiouEcho': {
         'name': 'Melodious Echo',
         'do': self.melodiousEcho,
+        'canDo': self.canDoMelodiousEcho,
         'energyRequirement': {
           EnergyType.Colorless: 1,
           EnergyType.Psychic: 1,
@@ -344,6 +376,9 @@ class MeloettaFS124:
     game.players[opponent].activePokemon.hp -= game.activePokemonAttackChecks(player, opponent, 70 * fusionStrikeEnergyAmt)
 
     return game
+  
+  def canDoMelodiousEcho():
+    return True
 
 class OricorioFS42:
   def __init__(self):
@@ -371,12 +406,14 @@ class OricorioFS42:
     self.asleep = False
     self.ability = {
       'name': 'Lesson In Zeal',
+      'canDo': self.canDoLessonInZeal(),
       'text': 'All of your Fusion Strike Pokémon take 20 less damage from attacks from your opponent\'s Pokémon (after applying Weakness and Resistance). You can\'t apply more than 1 Lesson in Zeal Ability at a time.'
     }
     self.moves = {
       'glisteningDroplets': {
         'name': 'Glistening Droplets',
         'do': self.glisteningDroplets,
+        'canDo': self.canDoGlisteningDroplets,
         'energyRequirement': {
           EnergyType.Colorless: 1,
           EnergyType.Psychic: 0,
@@ -392,26 +429,28 @@ class OricorioFS42:
       EnergyType.Water: 0
     }
 
+  def canDoLessonInZeal():
+    return False
+
   def glisteningDroplets(self, game, player, opponent, howToPutDamageCounters):
     if not game.energyForAttackCheck(game.players[player].activePokemon.attachedEnergy, self.moves['glisteningDroplets']['energyRequirement']):
       raise Exception('Not enough energy for move Glistening Droplets')
     
-    # howToPutDamageCounters is a list containing dictionaries with keys pokemonLocation, pokemonIndex, and damageAmt
+    # howToPutDamageCounters is a list containing dictionaries with keys pokemonLocation and pokemonIndex for each damage counter
 
-    howToDamageAmt = 0
+    if len(howToPutDamageCounters) != 5:
+      raise Exception('Damage amount for Glistening Droplets does not equal exactly 5')
 
     for howTo in howToPutDamageCounters:
-      howToDamageAmt += howTo.damageAmt
-
       if howTo.pokemonLocation == "activePokemon":
-        game.players[opponent][howTo.pokemonLocation].hp -= howTo.damageAmt
+        game.players[opponent][howTo.pokemonLocation].hp -= 10
       else:
-        game.players[opponent][howTo.pokemonLocation][howTo.pokemonIndex].hp -= howTo.damageAmt
+        game.players[opponent][howTo.pokemonLocation][howTo.pokemonIndex].hp -= 10
 
-    if not howToDamageAmt == 5:
-      raise Exception('Damage amount for Glistening Droplets does not equal exactly 5')
-    
     return game
+  
+  def canDoGlisteningDroplets():
+    return True
   
 class BosssOrdersGhetsisPE265:
   def __init__(self):
@@ -437,6 +476,8 @@ class BosssOrdersGhetsisPE265:
         game.players[opponent].bench.append(game.players[opponent].activePokemon)
 
         game.players[opponent].activePokemon = pokemon
+
+        game.players[opponent].activePokemonCantAttack = 0
 
       game.players[player].canUseSupporter = False
 
@@ -550,13 +591,13 @@ class JudgeSAV176:
 class LostCityLO161:
   def __init__(self):
     self.cardType = CardType.Stadium
-    self.name = 'LostCity'
+    self.name = 'Lost City'
     self.text = 'Whenever a Pokémon (either yours or your opponent\'s) is Knocked Out, put that Pokémon in the Lost Zone instead of the discard pile. (Discard all attached cards.)'
 
 class CrystalCaveES230:
   def __init__(self):
     self.cardType = CardType.Stadium
-    self.name = 'CrystalCave'
+    self.name = 'Crystal Cave'
     self.text = 'Once during each player\'s turn, that player may heal 30 damage from each of their Metal Pokémon and Dragon Pokémon.'
 
   def effect(self, game, player):
@@ -578,13 +619,13 @@ class CrystalCaveES230:
 class PathToThePeakCR148:
   def __init__(self):
     self.cardType = CardType.Stadium
-    self.name = 'PathToThePeak'
+    self.name = 'Path To The Peak'
     self.text = 'Pokémon with a Rule Box in play (both yours and your opponent\'s) have no Abilities. (Pokémon V, Pokémon-GX, etc. have Rule Boxes.)'
 
 class BattleVipPassFS225:
   def __init__(self):
     self.cardType = CardType.Item
-    self.name = 'BattleVipPass'
+    self.name = 'Battle Vip Pass'
     self.text = 'You can use this card only during your first turn. Search your deck for up to 2 Basic Pokémon and put them onto your Bench. Then, shuffle your deck.'
 
   def effect(self, game, player, pokemon1Index = None, pokemon2Index = None):
@@ -730,6 +771,8 @@ class SwitchCartAR154:
 
     game.players[player].activePokemon = pokemonFromBench
 
+    game.players[player].activePokemonCantAttack = 0
+
     return game
   
 class EscapeRopeBS125:
@@ -755,6 +798,8 @@ class EscapeRopeBS125:
       game.players[player].bench.append(game.players[player].activePokemon)
 
       game.players[player].activePokemon = playerPokemonFromBench
+
+      game.players[player].activePokemonCantAttack = 0
     
     if opponentBenchIndex:
       opponentPokemonFromBench = game.players[opponent].bench.pop(opponentBenchIndex)
@@ -772,6 +817,8 @@ class EscapeRopeBS125:
       game.players[opponent].bench.append(game.players[opponent].activePokemon)
 
       game.players[opponent].activePokemon = opponentPokemonFromBench
+
+      game.players[opponent].activePokemonCantAttack = 0
 
     return game
   
