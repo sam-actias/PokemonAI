@@ -157,7 +157,7 @@ class MewVFS250:
       
     return game
       
-  def psychicLeap(self, game, player, opponent, shuffleIn, newActivePokemonIndex):
+  def psychicLeap(self, game, player, opponent, shuffleIn, newActivePokemonIndex = None):
     if not game.energyForAttackCheck(game.players[player].activePokemon.attachedEnergy, self.moves['psychicLeap']['energyRequirement']):
       raise Exception('Not enough energy for move Psychic Leap')
     # provide a shuffleIn boolean
@@ -166,7 +166,7 @@ class MewVFS250:
 
     if (shuffleIn & newActivePokemonIndex):
       if len(game.players[player].bench) < 1:
-        raise Exception('can\'t do move Psychic Leap if no Pokemon on bench')
+        raise Exception('can\'t do move Psychic Leap and shuffle Mew V into deck if no Pokemon on bench')
       else:
         if game.players[player].activePokemon.tool:
           game.players[player].deck.append(game.players[player].activePokemon.tool)

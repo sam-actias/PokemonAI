@@ -310,6 +310,14 @@ class Game:
     if self.players[opponent].activePokemon.hp <= 0:
       self.players[player].prizesToPick += self.players[opponent].activePokemon.prizesWhenKnockedOut
 
+    for pokemon in self.players[player].bench:
+      if pokemon.hp <= 0:
+        self.players[opponent].prizesToPick += pokemon.prizesWhenKnockedOut
+
+    for pokemon in self.players[opponent].bench:
+      if pokemon.hp <= 0:
+        self.players[player].prizesToPick += pokemon.prizesWhenKnockedOut
+
     if self.players[player].prizesToPick >= len(self.players[player].prizes) and self.players[opponent].prizesToPick >= len(self.players[opponent].prizes):
       self.winner = 'tie'
     elif self.players[player].prizesToPick >= len(self.players[player].prizes):
