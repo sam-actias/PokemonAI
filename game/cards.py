@@ -15,7 +15,8 @@ class MewVmaxFS268:
     self.retreatCost = 0
     self.hasRuleBox = True
     self.prizesWhenKnockedOut = 3
-    self.evolvesFrom = 'Mew V'
+    self.evolvesFrom = [ MewVFS250() ]
+    self.canEvolve = False
     self.fusionStrike = True
     self.isV = True
     self.tool = None
@@ -100,7 +101,8 @@ class MewVFS250:
     self.retreatCost = 0
     self.hasRuleBox = True
     self.prizesWhenKnockedOut = 2
-    self.evolvesFrom = None
+    self.evolvesFrom = []
+    self.canEvolve = False
     self.fusionStrike = True
     self.isV = True
     self.tool = None
@@ -176,12 +178,19 @@ class MewVFS250:
       if len(game.players[player].bench) < 1:
         raise Exception('can\'t do move Psychic Leap and shuffle Mew V into deck if no Pokemon on bench')
       else:
+        if game.players[player].activePokemon.evolvesFrom:
+          game.players[player].deck.append(game.players[player].activePokemon.evolvesFrom)
+
         if game.players[player].activePokemon.tool:
           game.players[player].deck.append(game.players[player].activePokemon.tool)
         
-        if len(game.players[player].activePokemon.attachedEnergy) > 0:
-          for card in game.players[player].activePokemon.attachedEnergy:
-            game.players[player].deck.append(card)
+        if game.players[player].activePokemon.attachedEnergy[EnergyType.FusionStrikeEnergy] > 0:
+          for i in range(game.players[player].activePokemon.attachedEnergy[EnergyType.FusionStrikeEnergy]):
+            game.players[player].deck.append(FusionStrikeEnergyFS244())
+
+        if game.players[player].activePokemon.attachedEnergy[EnergyType.DoubleTurboEnergy] > 0:
+          for i in range(game.players[player].activePokemon.attachedEnergy[EnergyType.DoubleTurboEnergy]):
+            game.players[player].deck.append(DoubleTurboEnergyBS151())
 
         game.players[player].activePokemon.tool = None
 
@@ -227,7 +236,8 @@ class GenesectVFS255:
     self.retreatCost = 2
     self.hasRuleBox = True
     self.prizesWhenKnockedOut = 2
-    self.evolvesFrom = None
+    self.evolvesFrom = []
+    self.canEvolve = False
     self.fusionStrike = True
     self.isV = True
     self.tool = None
@@ -333,7 +343,8 @@ class MeloettaFS124:
     self.retreatCost = 1
     self.hasRuleBox = False
     self.prizesWhenKnockedOut = 1
-    self.evolvesFrom = None
+    self.evolvesFrom = []
+    self.canEvolve = False
     self.fusionStrike = True
     self.isV = False
     self.tool = None
@@ -395,7 +406,8 @@ class OricorioFS42:
     self.retreatCost = 1
     self.hasRuleBox = False
     self.prizesWhenKnockedOut = 1
-    self.evolvesFrom = None
+    self.evolvesFrom = []
+    self.canEvolve = False
     self.fusionStrike = True
     self.isV = False
     self.tool = None

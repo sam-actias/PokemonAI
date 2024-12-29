@@ -447,6 +447,49 @@ class Game:
 
     raise Exception('cannot retreat if there are no benched Pokemon')
   
+  def evolve(self, player, currentPokemonLocation, currentPokemonIndex, evolvedPokemonHandIndex):
+    if currentPokemonLocation == 'activePokemon' and self.players[player].activePokemon.canEvolve:
+      canEvolveToThisPokemon = False
+
+      for pokemon in self.players[player].activePokemon.evolvesFrom:
+        if pokemon.name == self.players[player].hand[evolvedPokemonHandIndex]:
+          canEvolveToThisPokemon = True
+          break
+      
+      if canEvolveToThisPokemon:
+        self.players[player].hand[evolvedPokemonHandIndex].hp = (self.players[player].hand[evolvedPokemonHandIndex].startHp - 
+            (self.players[player].activePokemon.startHp - self.players[player].activePokemon.hp))
+        
+        if self.players[player].activePokemon.tool:
+          self.players[player].hand[evolvedPokemonHandIndex].tool = self.players[player].activePokemon.tool
+
+        self.players[player].hand[evolvedPokemonHandIndex].attachedEnergy[EnergyType.FusionStrikeEnergy] = self.players[player].activePokemon.attachedEnergy[EnergyType.FusionStrikeEnergy]
+
+        self.players[player].hand[evolvedPokemonHandIndex].attachedEnergy[EnergyType.DoubleStrikeEnergy] = self.players[player].activePokemon.attachedEnergy[EnergyType.DoubleStrikeEnergy]
+
+        self.players[player].activePokemon = self.players[player].hand[evolvedPokemonHandIndex]
+
+    elif self.players[player].bench[currentPokemonIndex].canEvolve:
+      canEvolveToThisPokemon = False
+
+      for pokemon in self.players[player].bench[currentPokemonIndex].evolvesFrom:
+        if pokemon.name == self.players[player].hand[evolvedPokemonHandIndex]:
+          canEvolveToThisPokemon = True
+          break
+        
+      if canEvolveToThisPokemon:
+        self.players[player].hand[evolvedPokemonHandIndex].hp = (self.players[player].hand[evolvedPokemonHandIndex].startHp - 
+            (self.players[player].bench[currentPokemonIndex].startHp - self.players[player].bench[currentPokemonIndex].hp))
+        
+        if self.players[player].bench[currentPokemonIndex].tool:
+          self.players[player].hand[evolvedPokemonHandIndex].tool = self.players[player].bench[currentPokemonIndex].tool
+
+        self.players[player].hand[evolvedPokemonHandIndex].attachedEnergy[EnergyType.FusionStrikeEnergy] = self.players[player].bench[currentPokemonIndex].attachedEnergy[EnergyType.FusionStrikeEnergy]
+
+        self.players[player].hand[evolvedPokemonHandIndex].attachedEnergy[EnergyType.DoubleStrikeEnergy] = self.players[player].bench[currentPokemonIndex].attachedEnergy[EnergyType.DoubleStrikeEnergy]
+
+        self.players[player].bench[currentPokemonIndex] = self.players[player].hand[evolvedPokemonHandIndex]
+
   def endTurn(self, player, opponent):
     if self.players[player].activePokemon.poisoned:
       self.players[player].activePokemon += 10
@@ -504,6 +547,11 @@ class Game:
     self.players[player].canRetreat = True
     self.players[player].canAttachEnergy = True
 
+    self.players[player].activePokemon.canEvolve = True
+
+    for index in enumerate(self.players[player].bench):
+      self.players[player].bench[index].canEvolve = True
+
   def pickNewActivePokemonFromBench(self, player, opponent, pokemonIndex):
     if len(self.players[player].bench) == 0:
       self.winner = opponent
@@ -530,10 +578,120 @@ class Game:
 
       return cards
   
-  def discardPokemonAndAttachedCards(game, player, pokemonLocation, pokemonIndex):
-    pokemon = None
+  def discardPokemonAndAttachedCards(self, player, pokemonLocation, pokemonIndex):
+    if pokemonLocation == 'activePokemon':
+      if self.players[player].activePokemon.evolvesFrom:
+        self.players[player].discardPile.append(self.players[player].activePokemon.evolvesFrom)
 
-    if pokemonLocation = 'activePokemon':
-  
+      if self.players[player].activePokemon.tool:
+        self.players[player].discardPile.append(self.players[player].activePokemon.tool)
+        self.players[player].activePokemon.tool = None
 
-  def lostZonePokemonAndAttachedCard(game, player, pokemonLocation, pokemonIndex):
+      if self.players[player].activePokemon.attachedEnergy[EnergyType.FusionStrikeEnergy] > 0:
+        for i in range(self.players[player].activePokemon.attachedEnergy[EnergyType.FusionStrikeEnergy]):
+          self.players[player].discardPile.append(FusionStrikeEnergyFS244())
+        self.players[player].activePokemon.attachedEnergy[EnergyType.FusionStrikeEnergy] = 0
+
+      if self.players[player].activePokemon.attachedEnergy[EnergyType.DoubleTurboEnergy] > 0:
+        for i in range(self.players[player].activePokemon.attachedEnergy[EnergyType.DoubleTurboEnergy]):
+          self.players[player].discardPile.append(DoubleTurboEnergyBS151())
+        self.players[player].activePokemon.attachedEnergy[EnergyType.DoubleTurboEnergy] = 0
+
+      self.players[player].activePokemon.hp = self.players[player].activePokemon.startHp
+      self.players[player].activePokemon.burned = False
+      self.players[player].activePokemon.poisoned = False
+      self.players[player].activePokemon.paralyzed = False
+      self.players[player].activePokemon.confused = False
+      self.players[player].activePokemon.asleep = False
+
+      self.players[player].discardPile.append(self.players[player].activePokemon)
+
+      self.players[player].activePokemon = None
+
+    else:
+      if self.players[player].bench[pokemonIndex].evolvesFrom:
+        self.players[player].discardPile.append(self.players[player].bench[pokemonIndex].evolvesFrom)
+
+      if self.players[player].bench[pokemonIndex].tool:
+        self.players[player].discardPile.append(self.players[player].bench[pokemonIndex].tool)
+        self.players[player].bench[pokemonIndex].tool = None
+
+      if self.players[player].bench[pokemonIndex].attachedEnergy[EnergyType.FusionStrikeEnergy] > 0:
+        for i in range(self.players[player].bench[pokemonIndex].attachedEnergy[EnergyType.FusionStrikeEnergy]):
+          self.players[player].discardPile.append(FusionStrikeEnergyFS244())
+        self.players[player].bench[pokemonIndex].attachedEnergy[EnergyType.FusionStrikeEnergy] = 0
+
+      if self.players[player].bench[pokemonIndex].attachedEnergy[EnergyType.DoubleTurboEnergy] > 0:
+        for i in range(self.players[player].bench[pokemonIndex].attachedEnergy[EnergyType.DoubleTurboEnergy]):
+          self.players[player].discardPile.append(DoubleTurboEnergyBS151())
+        self.players[player].bench[pokemonIndex].attachedEnergy[EnergyType.DoubleTurboEnergy] = 0
+
+      self.players[player].bench[pokemonIndex].hp = self.players[player].bench[pokemonIndex].startHp
+      self.players[player].bench[pokemonIndex].burned = False
+      self.players[player].bench[pokemonIndex].poisoned = False
+      self.players[player].bench[pokemonIndex].paralyzed = False
+      self.players[player].bench[pokemonIndex].confused = False
+      self.players[player].bench[pokemonIndex].asleep = False
+
+      self.players[player].discardPile.append(self.players[player].bench[pokemonIndex])
+
+      self.players[player].bench.pop(pokemonIndex)
+
+  def lostZonePokemonAndAttachedCard(self, player, pokemonLocation, pokemonIndex):
+    if pokemonLocation == 'activePokemon':
+      if self.players[player].activePokemon.evolvesFrom:
+        self.players[player].lostZone.append(self.players[player].activePokemon.evolvesFrom)
+
+      if self.players[player].activePokemon.tool:
+        self.players[player].lostZone.append(self.players[player].activePokemon.tool)
+        self.players[player].activePokemon.tool = None
+
+      if self.players[player].activePokemon.attachedEnergy[EnergyType.FusionStrikeEnergy] > 0:
+        for i in range(self.players[player].activePokemon.attachedEnergy[EnergyType.FusionStrikeEnergy]):
+          self.players[player].lostZone.append(FusionStrikeEnergyFS244())
+        self.players[player].activePokemon.attachedEnergy[EnergyType.FusionStrikeEnergy] = 0
+
+      if self.players[player].activePokemon.attachedEnergy[EnergyType.DoubleTurboEnergy] > 0:
+        for i in range(self.players[player].activePokemon.attachedEnergy[EnergyType.DoubleTurboEnergy]):
+          self.players[player].lostZone.append(DoubleTurboEnergyBS151())
+        self.players[player].activePokemon.attachedEnergy[EnergyType.DoubleTurboEnergy] = 0
+
+      self.players[player].activePokemon.hp = self.players[player].activePokemon.startHp
+      self.players[player].activePokemon.burned = False
+      self.players[player].activePokemon.poisoned = False
+      self.players[player].activePokemon.paralyzed = False
+      self.players[player].activePokemon.confused = False
+      self.players[player].activePokemon.asleep = False
+
+      self.players[player].lostZone.append(self.players[player].activePokemon)
+
+      self.players[player].activePokemon = None
+
+    else:
+      if self.players[player].bench[pokemonIndex].evolvesFrom:
+        self.players[player].lostZone.append(self.players[player].bench[pokemonIndex].evolvesFrom)
+
+      if self.players[player].bench[pokemonIndex].tool:
+        self.players[player].lostZone.append(self.players[player].bench[pokemonIndex].tool)
+        self.players[player].bench[pokemonIndex].tool = None
+
+      if self.players[player].bench[pokemonIndex].attachedEnergy[EnergyType.FusionStrikeEnergy] > 0:
+        for i in range(self.players[player].bench[pokemonIndex].attachedEnergy[EnergyType.FusionStrikeEnergy]):
+          self.players[player].lostZone.append(FusionStrikeEnergyFS244())
+        self.players[player].bench[pokemonIndex].attachedEnergy[EnergyType.FusionStrikeEnergy] = 0
+
+      if self.players[player].bench[pokemonIndex].attachedEnergy[EnergyType.DoubleTurboEnergy] > 0:
+        for i in range(self.players[player].bench[pokemonIndex].attachedEnergy[EnergyType.DoubleTurboEnergy]):
+          self.players[player].lostZone.append(DoubleTurboEnergyBS151())
+        self.players[player].bench[pokemonIndex].attachedEnergy[EnergyType.DoubleTurboEnergy] = 0
+
+      self.players[player].bench[pokemonIndex].hp = self.players[player].bench[pokemonIndex].startHp
+      self.players[player].bench[pokemonIndex].burned = False
+      self.players[player].bench[pokemonIndex].poisoned = False
+      self.players[player].bench[pokemonIndex].paralyzed = False
+      self.players[player].bench[pokemonIndex].confused = False
+      self.players[player].bench[pokemonIndex].asleep = False
+
+      self.players[player].lostZone.append(self.players[player].bench[pokemonIndex])
+
+      self.players[player].bench.pop(pokemonIndex)
