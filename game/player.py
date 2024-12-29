@@ -1,5 +1,6 @@
 class Player:
-  def __init__(self, deck):
+  def __init__(self, ai, deck):
+      self.ai = ai
       self.deck = deck
       self.activePokemon = None
       self.bench = []

@@ -40,10 +40,42 @@ def printGameBoard(game):
 def determineTurnOptions(game, player):
   turnOptions = []
 
-  for move in list(game.players[player].activePokemon.moves.keys()):
-    if (game.energyForAttackCheck(game.players[player].activePokemon.attachedEnergy, game.players[player].activePokemon.moves[move]) 
-            and move['canDo'](game, player)):
-      turnOptions.append(move)
+  if len(game.players[player].bench) > 0:
+    energyCount = 0
+
+    energyCount += game.players[player].activePokemon.attachedEnergy[EnergyType.FusionStrikeEnergy]
+    energyCount += game.players[player].activePokemon.attachedEnergy[EnergyType.DoubleTurboEnergy]
+    energyCount += game.players[player].activePokemon.attachedEnergy[EnergyType.Water]
+
+    if energyCount >= game.players[player].activePokemon.retreatCost:
+      turnOptions.append('retreat')
+
+  for card in game.players[player].hand:
+    if card.cardType == CardType.Pokemon and card.stage == Stage.Basic and len(game.players[player].bench) < 5:
+      turnOptions.append('playBasicPokemonToBench')
+    elif card.cardType == CardType.Pokemon and len(card.evolvesFrom) > 0:
+      for pokemon in card.evolvesFrom:
+        if game.players[player].activePokemon.name == pokemon.name and game.players[player].activePokemon.canEvolve:
+          turnOptions.append('evolvePokemon')
+        
+        for benchPokemon in game.players[player].bench:
+          if pokemon.name == benchPokemon.name and benchPokemon.canEvolve:
+            turnOptions.append('evolvePokemon')
+    elif card.cardType == CardType.Item and card.canPlay(game, player):
+      turnOptions.append('playItem')
+    elif card.cardType == CardType.Stadium and game.players[player].canPlayStadiumFlag and card.canPlay(game, player):
+      turnOptions.append('playStadium')
+    elif card.cardType == CardType.Tool and card.canPlay(game, player):
+      turnOptions.append('playTool')
+    elif card.cardType == CardType.Supporters and game.players[player].canUseSupporterFlag and card.canPlay(game, player):
+      turnOptions.append('playSupporter')
+    elif card.CardType == CardType.Energy and game.players[player].canAttachEnergy and card.canPlay(game, player):
+      turnOptions.append('attachEnergy')
+
+    for move in list(game.players[player].activePokemon.moves.keys()):
+      if (game.energyForAttackCheck(game.players[player].activePokemon.attachedEnergy, game.players[player].activePokemon.moves[move]) 
+              and move['canDo'](game, player)):
+        turnOptions.append(move)
 
 def pickActivePokemon(game):
   print('\nPick a Basic Pokemon from your hand to be your active Pokemon.\n')
@@ -178,7 +210,7 @@ input()
 
 print('\nOkay, let\'s start')
 
-game = Game(player1Name, player2Name)
+game = Game(player1Name, False, player2Name, True)
 
 game.startGame()
 

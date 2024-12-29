@@ -1,4 +1,4 @@
-from enums import CardType
+from enums import CardType, EnergyType
 from pokemonTcg import printPokemon
 
 def energyMixPickPokemon(game, player, energyCardNames, energyCardIndexes, energyCardIndex):
@@ -378,7 +378,7 @@ def crossFusionStrike(game, player, opponent):
 def maxMiracle(game, player, opponent):
   return game.players[player].activePokemon.moves['maxMiracle']['do'](game, player, opponent)
 
-def energyMix(game, player):
+def energyMix(game, player, opponent):
   energyCardNames = []
   energyCardIndexes = []
 
@@ -643,12 +643,87 @@ def glisteningDroplets(game, player, opponent):
     
   return game.players[player].activePokemon.moves['glisteningDroplets']['do'](game, player, opponent, howToPutDamageCounters)
 
-attackTurnOptions = {
+def retreatChoose(game, player):
+  print('Pick an energy card to discard.\n')
+      
+  count = 0
+  energy = []
+
+  if game.players[player].activePokemon.attachedEnergy[EnergyType.FusionStrikeEnergy] > 0:
+    for i in range(game.players[player].activePokemon.attachedEnergy[EnergyType.FusionStrikeEnergy]):
+      print(f'{count}   Fusion Strike Energy')
+      energy.append(EnergyType.FusionStrikeEnergy)
+      count += 1
+
+  if game.players[player].activePokemon.attachedEnergy[EnergyType.DoubleTurboEnergy] > 0:
+    for i in range(game.players[player].activePokemon.attachedEnergy[EnergyType.DoubleTurboEnergy]):
+      print(f'{count}   Double Turbo Energy')
+      energy.append(EnergyType.DoubleTurboEnergy)
+      count += 1
+
+  if game.players[player].activePokemon.attachedEnergy[EnergyType.Water] > 0:
+    for i in range(game.players[player].activePokemon.attachedEnergy[EnergyType.Water]):
+      print(f'{count}   Water Energy')
+      energy.append(EnergyType.Water)
+      count += 1
+
+  print('\nCommands:')
+  print('choose {x}: choose an energy card')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'choose':
+    return energy[int(text[1])]
+  else:
+    print('what?')
+    return retreatChoose(game, player)
+
+def retreatPickABenchedPokemon(game, player):
+  print('\nPick a benched Pokemon to replace your active Pokemon.')
+
+  for index, pokemon in enumerate(game.players[player].bench):
+    print(f'{index}   {pokemon.name}')
+
+  print('\nCommands:')
+  print('details {x}: get details about a Pokemon')
+  print('choose {x}: choose a Pokemon')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'details':
+    printPokemon(game.players[player].bench[int(text[1])])
+    retreatPickABenchedPokemon(game, player)
+  elif text[0] == 'choose':
+    return int(text[1])
+  else:
+    print('what?')
+    retreatPickABenchedPokemon(game, player)
+
+def retreat(game, player, opponent):
+  if game.players[player].activePokemon.retreatCost > 0:
+    print(f'\nYou need to discard {game.players[player].activePokemon.retreatCost} energy card(s) 
+          from {game.players[player].activePokemon.name} in order to retreat.')
+    
+    energyToDiscard = []
+
+    for i in range(game.players[player].activePokemon.retreatCost):
+      energyToDiscard.append(retreatChoose(game, player))
+
+    newPokemonIndex = retreatPickABenchedPokemon(game, player)
+
+    return game.retreat(player, newPokemonIndex, energyToDiscard)
+
+humanAttackTurnOptions = {
   'crossFusionStrike': crossFusionStrike,
   'maxMiracle': maxMiracle,
   'energyMix': energyMix,
   'psychicLeap': psychicLeap,
   'technoBlast': technoBlast,
   'melodiousEcho': melodiousEcho,
-  'glisteningDroplets': glisteningDroplets
+  'glisteningDroplets': glisteningDroplets,
+  'retreat': retreat
 }

@@ -4,13 +4,13 @@ from cards import MewsRevenge, FusionStrikeEnergyFS244, DoubleTurboEnergyBS151
 import random
 
 class Game:
-  def __init__(self, playerName1, playerName2):
+  def __init__(self, playerName1, player1Ai, playerName2, player2Ai):
     self.player1Name = playerName1
     self.player2Name = playerName2
     self.goesFirst = None
     self.players = {
-      playerName1: Player(MewsRevenge()),
-      playerName2: Player(MewsRevenge())
+      playerName1: Player(player1Ai, MewsRevenge()),
+      playerName2: Player(player2Ai, MewsRevenge())
     }
 
   def activePokemonAttackChecks(self, player, opponent, attackAmt, mewVmaxCFS=False):
