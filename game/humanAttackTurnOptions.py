@@ -1,5 +1,6 @@
-from enums import CardType, EnergyType
-from pokemonTcg import printPokemon
+from enums import CardType, EnergyType, Stage
+from pokemonTcg import printPokemon, printEnergyCard
+from cards import FusionStrikeEnergyFS244, DoubleTurboEnergyBS151
 
 def energyMixPickPokemon(game, player, energyCardNames, energyCardIndexes, energyCardIndex):
   fusionStrikePokemon = []
@@ -144,8 +145,13 @@ def crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMove
     energyCardIndex = int(text[1])
 
     if text[0] == 'details':
-      # TODO: add display energy card details
-      print('nothing here yet')
+      if energyCardNames[energyCardIndex] == 'Fusion Strike Energy':
+        printEnergyCard(FusionStrikeEnergyFS244())
+      elif energyCardNames[energyCardIndex] == 'Double Turbo Energy':
+        printEnergyCard(DoubleTurboEnergyBS151())
+      else:
+        print('what?')
+        return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
     elif text[0] == 'choose':
       return crossFusionStrikeEnergyMixPickPokemon(game, player, opponent, energyCardNames, 
                 benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex, energyCardIndexes, energyCardIndex)
@@ -668,6 +674,7 @@ def retreatChoose(game, player):
       count += 1
 
   print('\nCommands:')
+  print('details {x}: get card details')
   print('choose {x}: choose an energy card')
 
   text = input()
@@ -676,6 +683,9 @@ def retreatChoose(game, player):
 
   if text[0] == 'choose':
     return energy[int(text[1])]
+  elif text[0] == 'details':
+    printEnergyCard(energy[int(text[1])])
+    return retreatChoose(game, player)
   else:
     print('what?')
     return retreatChoose(game, player)
@@ -717,6 +727,131 @@ def retreat(game, player, opponent):
 
     return game.retreat(player, newPokemonIndex, energyToDiscard)
 
+def playBasicPokemonToBench(game, player, opponent):
+  if len(game.players[player].bench) < 5: 
+    print('\nWhich Basic Pokemon in your hand do you want to play onto your Bench?')
+
+    basicPokemon = []
+    basicPokemonIndexes = []
+
+    for index, card in enumerate(game.players[player].hand):
+      if card.cardType == CardType.Pokemon and card.stage == Stage.Basic:
+        basicPokemon.add(card)
+        basicPokemonIndexes.add(index)
+
+    for index, pokemon in enumerate(basicPokemon):
+      print(f'{index}   {pokemon.name}')
+
+    print('\nCommands:')
+    print('details {x}: get card details')
+    print('choose {x}: choose a Pokemon')
+
+    text = input()
+
+    text = text.split()
+
+    if text[0] == 'details' and int(text[1]) < len(basicPokemon):
+      printPokemon(basicPokemon[int(text[1])])
+      return playBasicPokemonToBench(game, player, opponent)
+    elif text[0] == 'choose' and int(text[1]) < len(basicPokemon):
+      game.players[player].bench.append(basicPokemon[int(text[1])])
+      game.players[player].hand.pop(basicPokemonIndexes[int(text[1])])
+
+      return game
+    else:
+      print('what?')
+      return playBasicPokemonToBench(game, player, opponent)
+
+  raise Exception('bench is already full')
+
+def choosePokemonToEvolveFrom(game, player, canEvolveFrom, evolutionPokemonHandIndex):
+  print('\nPick a Pokemon to evolve with your chosen evolution Pokemon.')
+
+  for index, pokemonThatCanEvolve in enumerate(canEvolveFrom):
+    if pokemonThatCanEvolve['pokemonLocation'] == 'activePokemon':
+      print(f'{index}   {pokemonThatCanEvolve.name} (Active Pokemon)')
+    else:
+      print(f'{index}   {pokemonThatCanEvolve.name} (Bench)')
+
+  print('\nCommands:')
+  print('details {x}: get Pokemon details')
+  print('choose {x}: choose Pokemon to evolve')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'details' and int(text[1]) < len(canEvolveFrom):
+    printPokemon(canEvolveFrom[int(text[1])])
+    return choosePokemonToEvolveFrom(game, player, canEvolveFrom, evolutionPokemonHandIndex)
+  if text[0] == 'choose' and int(text[1]) < len(canEvolveFrom):
+    game.evolve(player, canEvolveFrom[0]['pokemonLocation'], canEvolveFrom[0]['pokeonIndex'], 
+                  evolutionPokemonHandIndex)
+    return game
+  else:
+    print('what?')
+    return choosePokemonToEvolveFrom(game, player, canEvolveFrom, evolutionPokemonHandIndex)
+
+def evolvePokemon(game, player, opponent):
+  print('\nWhich evolution Pokemon in your hand do you want to play?')
+
+  evolutionPokemonHand = []
+  evolutionPokemonHandIndexes = []
+
+  for index, card in enumerate(game.players[player].hand):
+    if card.cardType == CardType.Pokemon and not card.stage == Stage.Basic:
+      canPlay = False
+
+      for pokemon in card.evolvesFrom:
+        if game.players[player].activePokemon.name == pokemon.name:
+          canPlay = True
+
+        for benchPokemon in game.players[player].bench:
+          if benchPokemon.name == pokemon.name:
+            canPlay = True
+      
+      if canPlay:
+        evolutionPokemonHand.append(card)
+        evolutionPokemonHandIndexes.append(index)
+  
+  for index, pokemon in enumerate(evolutionPokemonHand):
+    print(f'{index}   {pokemon.name}')
+
+  print('\nCommands:')
+  print('details {x}: get details about Pokemon')
+  print('choose {x}: choose evolution Pokemon to play')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'details' and int(text[1]) < len(evolutionPokemonHand):
+    printPokemon(evolutionPokemonHand[int(text[0])])
+    return evolvePokemon(game, player, opponent)
+  elif text[0] == 'choose' and int(text[1]) < len(evolutionPokemonHand):
+    canEvolveFrom = []
+
+    for pokemon in evolutionPokemonHand[int(text(1))].evolvesFrom:
+      if game.players[player].activePokemon.name == pokemon.name:
+        canEvolveFrom.append({ 'name': pokemon.name, 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
+
+      for index, benchPokemon in enumerate(game.players[player].bench):
+        if benchPokemon.name == pokemon.name:
+          canEvolveFrom.append({ 'name': pokemon.name, 'pokemonLocation': 'bench', 'pokemonIndex': index})
+
+    if len(canEvolveFrom) == 1:
+      game.evolve(player, canEvolveFrom[0]['pokemonLocation'], canEvolveFrom[0]['pokeonIndex'], 
+                  evolutionPokemonHandIndexes[int(text(1))])
+      
+      return game
+    else:
+      return choosePokemonToEvolveFrom(game, player, canEvolveFrom, evolutionPokemonHandIndexes[int(text(1))])
+  else:
+    print('what?')
+    return evolvePokemon(game, player, opponent)
+
+
+
 humanAttackTurnOptions = {
   'crossFusionStrike': crossFusionStrike,
   'maxMiracle': maxMiracle,
@@ -725,5 +860,8 @@ humanAttackTurnOptions = {
   'technoBlast': technoBlast,
   'melodiousEcho': melodiousEcho,
   'glisteningDroplets': glisteningDroplets,
-  'retreat': retreat
+  'retreat': retreat,
+  'playBasicPokemonToBench': playBasicPokemonToBench,
+  'evolvePokemon': evolvePokemon,
+  'playItem': playItem
 }

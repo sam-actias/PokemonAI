@@ -2,6 +2,11 @@ from game import Game
 from enums import Stage, EnergyType, CardType
 from naiveAI import naiveAiChoose
 
+def printEnergyCard(card):
+  print(f'\nName: {card.name}')
+  print('Card Type: Energy')
+  print(f'Text: {card.text}')
+
 def printGameBoard(game):
   print('\nSYLVIA')
   print(f'Prizes: {len(game.players['SYLVIA'].prizes)}')
