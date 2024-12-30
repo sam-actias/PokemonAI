@@ -1,6 +1,7 @@
 from enums import CardType, EnergyType, Stage
 from pokemonTcg import printPokemon, printNonPokemonCard
 from cards import FusionStrikeEnergyFS244, DoubleTurboEnergyBS151
+import random
 
 def energyMixPickPokemon(game, player, energyCardNames, energyCardIndexes, energyCardIndex):
   fusionStrikePokemon = []
@@ -885,12 +886,76 @@ def battleVipPassSecondPokemon(game, player):
 
   if text[0] == 'details' and int(text[1]) < len(basicPokemon):
     printPokemon(basicPokemon[int(text[1])])
+    return battleVipPassSecondPokemon(game, player)
   elif text[0] == 'choose' and int(text[1]) < len(basicPokemon):
     return basicPokemonIndexes[int(text[1])]
   else:
     print('what?')
     return battleVipPassSecondPokemon(game, player)
   
+def cramomaticHeads(game, player):
+  print('\nYour coin flip landed on heads.')
+
+  print('\nPick a card from your deck to put into your hand.')
+
+  for index, card in enumerate(game.players[player].deck):
+    print(f'{index}   {card.name}')
+
+  print('\nCommands:')
+  print('details {x}: get details about card')
+  print('choose {x}: choose card')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'details' and int(text[1]) < len(game.players[player].deck):
+    printNonPokemonCard(game.players[player].deck[int(text[1])])
+    return cramomaticHeads(game, player)
+  elif text[0] == 'choose' and int(text[1]) < len(game.players[player].deck):
+    return int(text[1])
+  else:
+    print('what?')
+    return cramomaticHeads(game, player)
+
+def ultraBallPickPokemon(game, player):
+  print('\nPick a Pokemon from your deck to put into your hand.')
+
+  pokemon = []
+  pokemonIndexes = []
+
+  for index, card in enumerate(game.players[player].deck):
+    if card.cardType == CardType.Pokemon:
+      pokemon.append(card)
+      pokemonIndexes.append(index)
+
+ 
+
+def ultraBallDiscardSecondCard(game, player, hand):
+  print('\nPick second card from your hand to discard.')
+
+  for index, card in enumerate(hand):
+    print(f'{index}   {card.name}')
+
+  print('\nCommands:')
+  print('details {x}: get details about card')
+  print('choose {x}: choose card')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'details' and int(text[1]) < len(game.players[player].hand):
+    printNonPokemonCard(game.players[player].hand[int(text[1])])
+    return determineItemEffectParams(game, player, opponent, item)
+  elif text[0] == 'choose' and int(text[1]) < len(game.players[player].hand):
+    discardCard2Index = int(text[1])
+
+    return discardCard2Index, ultraBallPickPokemon(game, player)
+  else:
+    print('what?')
+    return determineItemEffectParams(game, player, opponent, item)
+
 def determineItemEffectParams(game, player, opponent, item):
   if item.name == 'Battle VIP Pass':
     basicPokemon = []
@@ -900,6 +965,11 @@ def determineItemEffectParams(game, player, opponent, item):
       if card.cardType == CardType.Pokemon and card.stage == Stage.Basic:
         basicPokemon.append(card)
         basicPokemonIndexes.append(index)
+
+    if len(basicPokemon) == 0:
+      print('There are no Basic Pokemon in your deck. Battle VIP Pass ends.')
+
+      return { 'pokemon1Index': None, 'pokemon2Index': None }
 
     print('\nPick a Basic Pokemon from your deck.')
 
@@ -916,6 +986,7 @@ def determineItemEffectParams(game, player, opponent, item):
 
     if text[0] == 'details' and int(text[1]) < len(basicPokemon):
       printPokemon(basicPokemon[int(text[1])])
+      return determineItemEffectParams(game, player, opponent, item)
     elif text[0] == 'choose' and int(text[1]) < len(basicPokemon):
       pokemon1Index = basicPokemonIndexes[int(text[1])]
 
@@ -930,7 +1001,79 @@ def determineItemEffectParams(game, player, opponent, item):
       return determineItemEffectParams(game, player, opponent, item)
     
   elif item.name == 'Cram-O-Matic':
+    print('\nPick an item to discard from your hand.')
 
+    itemCards = []
+    itemCardIndexes = []
+
+    for index, card in enumerate(game.players[player].hand):
+      if card.cardType == CardType.Item:
+        itemCards.append(card)
+        itemCardIndexes.append(index)
+
+    for index, card in enumerate(itemCards):
+      print(f'{index}   {card.name}')
+
+    print('\nCommands:')
+    print('details {x}: get details about item')
+    print('choose {x}: choose item')
+
+    text = input()
+
+    text = text.split()
+
+    if text[0] == 'details' and int(text[1]) < len(itemCards):
+      printNonPokemonCard(itemCards[int(text[1])])
+      return determineItemEffectParams(game, player, opponent, item)
+    elif text[0] == 'choose' and int(text[1]) < len(itemCards):
+      discardItemIndex = itemCardIndexes[int(text[1])]
+
+      coinFlip = random.randint(0, 1)
+
+      if coinFlip == 1:
+        return { 'discardItemIndex': discardItemIndex, 'heads': True, 'deckCardIndex': cramomaticHeads(game, player) }
+      
+      return { 'discardItemIndex': discardItemIndex, 'heads': False } 
+    else:
+      print('what?')
+      return determineItemEffectParams(game, player, opponent, item)
+    
+  elif item.name == 'Power Tablet':
+    return { }
+  
+  elif item.name == 'Ultra Ball':
+    # TODO reveal the card for later ML needs
+
+    print('\nPick first card from your hand to discard.')
+
+    hand = game.players[player].hand
+
+    for index, card in enumerate(hand):
+      print(f'{index}   {card.name}')
+
+    print('\nCommands:')
+    print('details {x}: get details about card')
+    print('choose {x}: choose card')
+
+    text = input()
+
+    text = text.split()
+
+    if text[0] == 'details' and int(text[1]) < len(game.players[player].hand):
+      printNonPokemonCard(game.players[player].hand[int(text[1])])
+      return determineItemEffectParams(game, player, opponent, item)
+    elif text[0] == 'choose' and int(text[1]) < len(game.players[player].hand):
+      discardCard1Index = int(text[1])
+
+      hand.pop(discardCard1Index)
+
+
+
+    else:
+      print('what?')
+      return determineItemEffectParams(game, player, opponent, item)
+
+    
 
 def playItem(game, player, opponent):
   itemCards = []
@@ -956,8 +1099,14 @@ def playItem(game, player, opponent):
 
   if text[0] == 'details' and int(text[1]) < len(itemCards):
     printNonPokemonCard(itemCards[int(text[1])])
+    return playItem(game, player, opponent)
   elif text[0] == 'choose' and int(text[1]) < len(itemCards):
-    
+    game.playItem(player, itemCardIndexes[int(text[1])], determineItemEffectParams(game, player, opponent, itemCards[int(text[1])]))
+
+    return game
+  else:
+    print('what?')
+    return playItem(game, player, opponent)
 
 humanAttackTurnOptions = {
   'crossFusionStrike': crossFusionStrike,

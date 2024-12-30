@@ -704,7 +704,7 @@ class BattleVipPassFS225:
     raise Exception('cannot play Battle VIP Pass on any turn but a player\'s first turn')
   
   def canPlay(self, game, player, opponent):
-    if game.players[player].activeTurn == 1 and len(game.players[player].bench) < 5:
+    if game.players[player].activeTurn == 1 and len(game.players[player].bench) < 5 and len(game.players[player].deck) > 0:
       return True
     
     return False
@@ -715,7 +715,7 @@ class CramomaticFS229:
     self.name = 'Cram-O-Matic'
     self.text = 'You can use this card only if you discard another Item card from your hand. Flip a coin. If heads, search your deck for a card and put it into your hand. Then, shuffle your deck.'
 
-  def effect(self, game, player, discardItemIndex, heads, deckCardIndex):
+  def effect(self, game, player, discardItemIndex, heads, deckCardIndex = None):
     if game.players[player].hand[discardItemIndex].cardType == CardType.Item:
       game.players[player].discardPile.append(game.players[player].hand.pop(discardItemIndex))
 
@@ -729,15 +729,16 @@ class CramomaticFS229:
     raise Exception('item discarded in ordeer to play Cram-O-Matic must be an Item')
   
   def canPlay(self, game, player, opponent):
-    itemAmtInHand = 0
+    if len(game.players[player].deck) > 0:
+      itemAmtInHand = 0
 
-    for card in game.players[player].hand:
-      if card.cardType == CardType.Item:
-        itemAmtInHand += 1
-        if itemAmtInHand == 2:
-          return True
-        
-    return False
+      for card in game.players[player].hand:
+        if card.cardType == CardType.Item:
+          itemAmtInHand += 1
+          if itemAmtInHand == 2:
+            return True
+          
+      return False
   
 class PowerTabletFS281:
   def __init__(self):
