@@ -929,7 +929,30 @@ def ultraBallPickPokemon(game, player):
       pokemon.append(card)
       pokemonIndexes.append(index)
 
- 
+  if len(pokemon) == 0:
+    print('There are no Pokemon in your deck. Ultra Ball ends.')
+
+    return None
+
+  for index, card in enumerate(pokemon):
+    print(f'{index}   {card.name}')
+
+  print('\nCommands:')
+  print('details {x}: get details about Pokemon')
+  print('choose {x}: choose Pokemon')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'details' and int(text[1]) < len(pokemon):
+    printPokemon(pokemon[int(text[1])])
+    return ultraBallPickPokemon(game, player)
+  elif text[0] == 'choose' and int(text[1]) < len(pokemon):
+    return pokemonIndexes[int(text[1])]
+  else:
+    print('what?')
+    return ultraBallPickPokemon(game, player)
 
 def ultraBallDiscardSecondCard(game, player, hand):
   print('\nPick second card from your hand to discard.')
@@ -954,7 +977,7 @@ def ultraBallDiscardSecondCard(game, player, hand):
     return discardCard2Index, ultraBallPickPokemon(game, player)
   else:
     print('what?')
-    return determineItemEffectParams(game, player, opponent, item)
+    return ultraBallDiscardSecondCard(game, player, hand)
 
 def determineItemEffectParams(game, player, opponent, item):
   if item.name == 'Battle VIP Pass':
@@ -1067,11 +1090,23 @@ def determineItemEffectParams(game, player, opponent, item):
 
       hand.pop(discardCard1Index)
 
+      discardCard2Index, pokemonDeckIndex = ultraBallDiscardSecondCard(game, player, hand)
 
+      return { 'discardCard1Index': discardCard1Index, 'discardCard2Index': discardCard2Index, 'pokemonDeckIndex': pokemonDeckIndex }
 
     else:
       print('what?')
       return determineItemEffectParams(game, player, opponent, item)
+
+  elif item.name == 'Lost Vacuum':
+    print('\nPick a card from your hand to discard.')
+
+    for index, card in enumerate(game.players[player].hand):
+      print(f'{index}   {card.name}')
+
+    print('\nCommands:')
+    print('details {x}: get details about card')
+    print('choose {x}: choose card')
 
     
 
