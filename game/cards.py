@@ -497,6 +497,12 @@ class BosssOrdersGhetsisPE265:
     
     raise Exception("Can't play Boss\'s Order Ghetsis if player has already played a Supporter card this turn")
   
+  def canPlay(self, game, player, opponent):
+    if len(game.players[opponent].bench) > 0 and game.players[player].canUseSupporterFlag:
+      return True
+    
+    return False
+  
 class ElesasSparkleFS260:
   def __init__(self):
     self.cardType = CardType.Supporter
@@ -536,6 +542,17 @@ class ElesasSparkleFS260:
     
     raise Exception("Can't play Elesa\'s Sparkle if player has already played a Supporter card this turn")
 
+  def canPlay(self, game, player, opponent):
+    if game.players[player].canUseSupporterFlag:
+      if game.players[player].activePokemon.fusionStrike:
+        return True
+      
+      for pokemon in game.players[player].bench:
+        if pokemon.fusionStrike:
+          return True
+      
+    return False
+
 class IonoPE269:
   def __init__(self):
     self.cardType = CardType.Supporter
@@ -564,7 +581,11 @@ class IonoPE269:
 
       return game
   
-    raise Exception("Can't play Iono if player has already played a Supporter card this turn")  
+    raise Exception("Can't play Iono if player has already played a Supporter card this turn")
+
+  def canPlay(self, game, player, opponent):
+    if game.players[player].canUseSupporterFlag:
+      return True
 
 class JudgeSAV176:
   def __init__(self):
@@ -600,12 +621,21 @@ class JudgeSAV176:
 
     raise Exception("Can't play Judge if player has already played a Supporter card this turn") 
 
+  def canPlay(self, game, player, opponent):
+    if game.players[player].canUseSupporterFlag:
+      return True
+
 class LostCityLO161:
   def __init__(self):
     self.cardType = CardType.Stadium
     self.name = 'Lost City'
     self.text = 'Whenever a Pokémon (either yours or your opponent\'s) is Knocked Out, put that Pokémon in the Lost Zone instead of the discard pile. (Discard all attached cards.)'
 
+  def canPlay(self, game, player, opponent):
+    if game.players[player].canPlayStadiumFlag and (game.players[player].stadium == None or 
+                                                game.players[player].stadium.name != self.name): 
+      return True
+    
 class CrystalCaveES230:
   def __init__(self):
     self.cardType = CardType.Stadium
@@ -627,6 +657,11 @@ class CrystalCaveES230:
           game.players[player].bench[index].hp = game.players[player].bench[index].startHp
 
     return game
+  
+  def canPlay(self, game, player, opponent):
+    if game.players[player].canPlayStadiumFlag and (game.players[player].stadium == None or 
+                                                game.players[player].stadium.name != self.name): 
+      return True
 
 class PathToThePeakCR148:
   def __init__(self):
@@ -634,10 +669,15 @@ class PathToThePeakCR148:
     self.name = 'Path To The Peak'
     self.text = 'Pokémon with a Rule Box in play (both yours and your opponent\'s) have no Abilities. (Pokémon V, Pokémon-GX, etc. have Rule Boxes.)'
 
+  def canPlay(self, game, player, opponent):
+    if game.players[player].canPlayStadiumFlag and (game.players[player].stadium == None or 
+                                                game.players[player].stadium.name != self.name): 
+      return True
+
 class BattleVipPassFS225:
   def __init__(self):
     self.cardType = CardType.Item
-    self.name = 'Battle Vip Pass'
+    self.name = 'Battle VIP Pass'
     self.text = 'You can use this card only during your first turn. Search your deck for up to 2 Basic Pokémon and put them onto your Bench. Then, shuffle your deck.'
 
   def effect(self, game, player, pokemon1Index = None, pokemon2Index = None):
@@ -663,6 +703,12 @@ class BattleVipPassFS225:
     
     raise Exception('cannot play Battle VIP Pass on any turn but a player\'s first turn')
   
+  def canPlay(self, game, player, opponent):
+    if game.players[player].activeTurn == 1 and len(game.players[player].bench) < 5:
+      return True
+    
+    return False
+
 class CramomaticFS229:
   def __init__(self):
     self.cardType = CardType.Item
@@ -682,6 +728,17 @@ class CramomaticFS229:
     
     raise Exception('item discarded in ordeer to play Cram-O-Matic must be an Item')
   
+  def canPlay(self, game, player, opponent):
+    itemAmtInHand = 0
+
+    for card in game.players[player].hand:
+      if card.cardType == CardType.Item:
+        itemAmtInHand += 1
+        if itemAmtInHand == 2:
+          return True
+        
+    return False
+  
 class PowerTabletFS281:
   def __init__(self):
     self.cardType = CardType.Item
@@ -692,6 +749,9 @@ class PowerTabletFS281:
     game.players[player].playedPowerTabletFlag = True
 
     return game
+  
+  def canPlay(self, game, player, opponent):
+    return True
   
 class UltraBallSAV196:
   def __init__(self):
@@ -717,6 +777,12 @@ class UltraBallSAV196:
 
     return game
   
+  def canPlay(self, game, player, opponent):
+    if len(game.players[player].hand) >= 3:
+      return True
+    
+    return False
+  
 class LostVacuumLO217:
   def __init__(self):
     self.cardType = CardType.Item
@@ -738,6 +804,30 @@ class LostVacuumLO217:
 
     return game
   
+  def canPlay(self, game, player, opponent):
+    if len(game.players[player].hand) >= 3:
+      if game.players[player].activePokemon.tool != None:
+        return True
+      
+      if game.players[opponent].activePokemon.tool != None:
+        return True
+      
+      if game.players[player].stadium != None:
+        return True
+      
+      if game.players[opponent].stadium != None:
+        return True
+      
+      for pokemon in game.players[player].bench:
+        if pokemon.tool != None:
+          return True
+
+      for pokemon in game.players[opponent].bench:
+        if pokemon.tool != None:
+          return True
+        
+    return False
+  
 class NestBallSAV255:
   def __init__(self):
     self.cardType = CardType.Item
@@ -754,7 +844,10 @@ class NestBallSAV255:
       return game
     
     raise Exception('cannot pull a card other than a Basic Pokemon from deck with Nest Ball')
-  
+
+  def canPlay(self, game, player, opponent):
+    return True
+
 class SwitchCartAR154:
   def __init__(self):
     self.cardType = CardType.Item
@@ -786,6 +879,12 @@ class SwitchCartAR154:
     game.players[player].activePokemonCantAttack = 0
 
     return game
+  
+  def canPlay(self, game, player, opponent):
+    if len(game.players[player].bench) > 0:
+      return True
+    
+    return False
   
 class EscapeRopeBS125:
   def __init__(self):
@@ -834,6 +933,12 @@ class EscapeRopeBS125:
 
     return game
   
+  def canPlay(self, game, player, opponent):
+    if len(game.players[player].bench) > 0 or len(game.players[opponent].bench) > 0:
+      return True
+    
+    return False
+  
 class PalPadSAV182:
   def __init__(self):
     self.cardType = CardType.Item
@@ -861,6 +966,13 @@ class PalPadSAV182:
     game.players[player].deck = game.shuffle(game.players[player].deck)
 
     return game
+  
+  def canPlay(self, game, player, opponent):
+    for card in game.players[player].discardPile:
+      if card.cardType == CardType.Supporter:
+        return True
+    
+    return False
 
 class ForestSealStoneST156:
   def __init__(self):
@@ -884,17 +996,47 @@ class ForestSealStoneST156:
     
     raise Exception('cannot use Forest Seal Stone\'s Ability because player has already used a Vstar Power this game')
   
+  def canPlay(self, game, player, opponent):
+    if game.players[player].activePokemon.isV and game.players[player].activePokemon.tool == None:
+      return True
+    
+    for pokemon in game.players[player].bench:
+      if pokemon.isV and pokemon.tool == None:
+        return True
+      
+    return False
+  
 class ChoiceBeltPE176:
   def __init__(self):
     self.cardType = CardType.Tool
     self.name = 'Choice Belt'
     self.text = 'The attacks of the Pokémon this card is attached to do 30 more damage to your opponent\'s Active Pokémon V (before applying Weakness and Resistance).'
 
+  def canPlay(self, game, player, opponent):
+    if game.players[player].activePokemon.tool == None:
+      return True
+    
+    for pokemon in game.players[player].bench:
+      if pokemon.tool == None:
+        return True
+      
+    return False
+  
 class BoxOfDisasterLO214:
   def __init__(self):
     self.cardType = CardType.Tool
     self.name = 'Box Of Disaster'
     self.text = 'If the Pokémon V this card is attached to has full HP and is Knocked Out by damage from an attack from your opponent\'s Pokémon, put 8 damage counters on the Attacking Pokémon.'
+
+  def canPlay(self, game, player, opponent):
+    if game.players[player].activePokemon.tool == None:
+      return True
+    
+    for pokemon in game.players[player].bench:
+      if pokemon.tool == None:
+        return True
+      
+    return False
 
 class FusionStrikeEnergyFS244:
   def __init__(self):
@@ -930,6 +1072,16 @@ class FusionStrikeEnergyFS244:
 
     return game
   
+  def canPlay(self, game, player, opponent):
+    if game.players[player].activePokemon.fusionStrike:
+      return True
+    
+    for pokemon in game.players[player].bench:
+      if pokemon.fusionStrike:
+        return True
+    
+    return False
+  
 class DoubleTurboEnergyBS151:
   def __init__(self):
     self.cardType = CardType.Energy
@@ -959,6 +1111,9 @@ class DoubleTurboEnergyBS151:
       game.players[player].discardPile.append(self)
 
     return game
+  
+  def canPlay(self, game, player, opponent):
+    return True
 
 # DECKS
 

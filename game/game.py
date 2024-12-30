@@ -490,6 +490,14 @@ class Game:
 
         self.players[player].bench[currentPokemonIndex] = self.players[player].hand[evolvedPokemonHandIndex]
 
+  def startTurn(self, player):
+    self.players[player].activeTurn += 1
+
+    if self.players[player].activeTurn == 1 and player == self.goesFirst:
+      self.players[player].canUseSupporterFlag = False
+
+    self.players[player].hand.append(self.players[player].deck.pop())
+
   def endTurn(self, player, opponent):
     if self.players[player].activePokemon.poisoned:
       self.players[player].activePokemon += 10

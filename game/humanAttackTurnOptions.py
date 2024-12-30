@@ -1,5 +1,5 @@
 from enums import CardType, EnergyType, Stage
-from pokemonTcg import printPokemon, printEnergyCard
+from pokemonTcg import printPokemon, printNonPokemonCard
 from cards import FusionStrikeEnergyFS244, DoubleTurboEnergyBS151
 
 def energyMixPickPokemon(game, player, energyCardNames, energyCardIndexes, energyCardIndex):
@@ -146,9 +146,9 @@ def crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMove
 
     if text[0] == 'details':
       if energyCardNames[energyCardIndex] == 'Fusion Strike Energy':
-        printEnergyCard(FusionStrikeEnergyFS244())
+        printNonPokemonCard(FusionStrikeEnergyFS244())
       elif energyCardNames[energyCardIndex] == 'Double Turbo Energy':
-        printEnergyCard(DoubleTurboEnergyBS151())
+        printNonPokemonCard(DoubleTurboEnergyBS151())
       else:
         print('what?')
         return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
@@ -684,7 +684,7 @@ def retreatChoose(game, player):
   if text[0] == 'choose':
     return energy[int(text[1])]
   elif text[0] == 'details':
-    printEnergyCard(energy[int(text[1])])
+    printNonPokemonCard(energy[int(text[1])])
     return retreatChoose(game, player)
   else:
     print('what?')
@@ -850,7 +850,114 @@ def evolvePokemon(game, player, opponent):
     print('what?')
     return evolvePokemon(game, player, opponent)
 
+def battleVipPassSecondPokemon(game, player):
+  print('\nDo you want to pick a second Pokemon?')
 
+  print('\nCommads:')
+  print('yes')
+  print('no')
+
+  text = input()
+
+  if text == 'no':
+    return None
+  
+  basicPokemon = []
+  basicPokemonIndexes = []
+
+  for index, card in enumerate(game.players[player].deck):
+    if card.cardType == CardType.Pokemon and card.stage == Stage.Basic:
+      basicPokemon.append(card)
+      basicPokemonIndexes.append(index)
+
+  print('\nPick a second Basic Pokemon from your deck.')
+
+  for index, pokemon in enumerate(basicPokemon):
+    print(f'{index}  {pokemon.name}')
+
+  print('\nCommands:')
+  print('details {x}: get details about Pokemon')
+  print('choose {x}: choose Pokemon')
+
+  textPokemon = input()
+
+  textPokemon = textPokemon.split()
+
+  if text[0] == 'details' and int(text[1]) < len(basicPokemon):
+    printPokemon(basicPokemon[int(text[1])])
+  elif text[0] == 'choose' and int(text[1]) < len(basicPokemon):
+    return basicPokemonIndexes[int(text[1])]
+  else:
+    print('what?')
+    return battleVipPassSecondPokemon(game, player)
+  
+def determineItemEffectParams(game, player, opponent, item):
+  if item.name == 'Battle VIP Pass':
+    basicPokemon = []
+    basicPokemonIndexes = []
+
+    for index, card in enumerate(game.players[player].deck):
+      if card.cardType == CardType.Pokemon and card.stage == Stage.Basic:
+        basicPokemon.append(card)
+        basicPokemonIndexes.append(index)
+
+    print('\nPick a Basic Pokemon from your deck.')
+
+    for index, pokemon in enumerate(basicPokemon):
+      print(f'{index}  {pokemon.name}')
+
+    print('\nCommands:')
+    print('details {x}: get details about Pokemon')
+    print('choose {x}: choose Pokemon')
+
+    text = input()
+
+    text = text.split()
+
+    if text[0] == 'details' and int(text[1]) < len(basicPokemon):
+      printPokemon(basicPokemon[int(text[1])])
+    elif text[0] == 'choose' and int(text[1]) < len(basicPokemon):
+      pokemon1Index = basicPokemonIndexes[int(text[1])]
+
+      if len(game.players[player].bench) == 5 or len(basicPokemon) == 1:
+        return game
+
+      pokemon2Index = battleVipPassSecondPokemon(game, player)
+
+      return { 'pokemon1Index': pokemon1Index, 'pokemon2Index': pokemon2Index }
+    else:
+      print('what?')
+      return determineItemEffectParams(game, player, opponent, item)
+    
+  elif item.name == 'Cram-O-Matic':
+
+
+def playItem(game, player, opponent):
+  itemCards = []
+  itemCardIndexes = []
+
+  for index, card in enumerate(game.players[player].hand):
+    if card.cardType == CardType.Item and card.canplay(game, player, opponent):
+      itemCards.append(card)
+      itemCardIndexes.append(index)
+    
+  print('\nWhich item do you want to play?')
+
+  for index, card in enumerate(itemCards):
+    print(f'{index}   {card.name}')
+
+  print('\nCommands:')
+  print('details {x}: show item card details')
+  print('choose {x}: choose item card')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'details' and int(text[1]) < len(itemCards):
+    printNonPokemonCard(itemCards[int(text[1])])
+  elif text[0] == 'choose' and int(text[1]) < len(itemCards):
+    
 
 humanAttackTurnOptions = {
   'crossFusionStrike': crossFusionStrike,
