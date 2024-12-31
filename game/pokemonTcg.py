@@ -8,6 +8,7 @@ def printNonPokemonCard(card):
   print(f'Text: {card.text}')
 
 def printGameBoard(game):
+  # combine with printNonPokemonCard
   print('\nSYLVIA')
   print(f'Prizes: {len(game.players['SYLVIA'].prizes)}')
   print(f'Can Use VSTAR Power: {game.players['SYLVIA'].canUseVstarPower}')
@@ -72,10 +73,20 @@ def determineTurnOptions(game, player, opponent):
       turnOptions.append('playStadium')
     elif card.cardType == CardType.Tool and card.canPlay(game, player, opponent):
       turnOptions.append('playTool')
-    elif card.cardType == CardType.Supporters and game.players[player].canUseSupporterFlag and card.canPlay(game, player, opponent):
+    elif card.cardType == CardType.Supporter and game.players[player].canUseSupporterFlag and card.canPlay(game, player, opponent):
       turnOptions.append('playSupporter')
     elif card.CardType == CardType.Energy and game.players[player].canAttachEnergy and card.canPlay(game, player, opponent):
       turnOptions.append('attachEnergy')
+
+    if game.players[player].stadium.canUseEffect(game, player, opponent):
+      turnOptions.append('useStadiumEffect')
+
+    if game.players[player].activePokemon.tool and game.players[player].activePokemon.tool.canUseAbility(game, player, opponent):
+      turnOptions.append('useToolAbility')
+
+    for pokemon in game.players[player].bench:
+      if pokemon.tool and pokemon.tool.canUseAbility(game, player, opponent):
+        turnOptions.append('useToolAbility')
 
     for move in list(game.players[player].activePokemon.moves.keys()):
       if (game.energyForAttackCheck(game.players[player].activePokemon.attachedEnergy, game.players[player].activePokemon.moves[move]) 

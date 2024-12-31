@@ -636,6 +636,9 @@ class LostCityLO161:
                                                 game.players[player].stadium.name != self.name): 
       return True
     
+  def canUseEffect(self, game, player, opponent):
+    return False
+    
 class CrystalCaveES230:
   def __init__(self):
     self.cardType = CardType.Stadium
@@ -658,6 +661,17 @@ class CrystalCaveES230:
 
     return game
   
+  def canUseEffect(self, game, player, opponent):
+    if game.players[player].activePokemon.type == EnergyType.Metal or game.players[player].activePokemon.type == EnergyType.Dragon:
+      return True
+    
+    for pokemon in game.players[player].bench:
+      if pokemon.type == EnergyType.Metal or game.players[player].activePokemon.type == EnergyType.Dragon:
+        return True
+      
+    return False
+
+  
   def canPlay(self, game, player, opponent):
     if game.players[player].canPlayStadiumFlag and (game.players[player].stadium == None or 
                                                 game.players[player].stadium.name != self.name): 
@@ -673,6 +687,9 @@ class PathToThePeakCR148:
     if game.players[player].canPlayStadiumFlag and (game.players[player].stadium == None or 
                                                 game.players[player].stadium.name != self.name): 
       return True
+    
+  def canUseEffect(self, game, player, opponent):
+    return False
 
 class BattleVipPassFS225:
   def __init__(self):
@@ -984,7 +1001,7 @@ class ForestSealStoneST156:
     self.name = 'Forest Seal Stone'
     self.text = 'VSTAR Power: The Pokémon V this card is attached to can use the VSTAR Power on this card. ABILITY Star Alchemy: During your turn, you may search your deck for a card and put it into your hand. Then, shuffle your deck.(You can\'t use more than 1 VSTAR Power in a game.)'
 
-  def useAbility(self, game, player, opponent, cardDeckIndex):
+  def useEffect(self, game, player, opponent, cardDeckIndex):
     if game.players[player].canUseVstarPower == True:
       if (game.players[player].stadium and game.players[player].stadium.name == 'Path To The Peak') or (game.players[opponent].stadium 
                                                           and game.players[opponent].stadium.name == 'PathToThePeakCR148'):
@@ -1010,6 +1027,12 @@ class ForestSealStoneST156:
       
     return False
   
+  def canUseEffect(game, player, opponent):
+    if game.players[player].canUseVstarPower:
+      return True
+    
+    return False
+  
 class ChoiceBeltPE176:
   def __init__(self):
     self.cardType = CardType.Tool
@@ -1026,6 +1049,9 @@ class ChoiceBeltPE176:
       
     return False
   
+  def canUseEffect(game, player, opponent):
+    return False
+  
 class BoxOfDisasterLO214:
   def __init__(self):
     self.cardType = CardType.Tool
@@ -1040,6 +1066,9 @@ class BoxOfDisasterLO214:
       if pokemon.tool == None:
         return True
       
+    return False
+  
+  def canUseEffect(game, player, opponent):
     return False
 
 class FusionStrikeEnergyFS244:

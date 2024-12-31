@@ -259,11 +259,13 @@ class Game:
     else:
       raise Exception('Cannot add tool to Pokemon that already had a tool')
     
-  def useToolAbility(self, player, effectParams, pokemonLocation, pokemonIndex = None):
-    if pokemonLocation == 'activePokemon' and self.players[player].activePokemon.tool:
-      self.players[player].activePokemon.tool.useAbility(self, player, **effectParams)
+  def useToolEffect(self, player, opponent, effectParams, pokemonLocation, pokemonIndex = None):
+    if pokemonLocation == 'activePokemon' and self.players[player].activePokemon.tool and self.players[player].activePokemon.tool.canUseEffect(self, player, opponent):
+      self.players[player].activePokemon.tool.useEffect(self, player, **effectParams)
+    elif self.players[player].bench[pokemonIndex].tool.canUseEffect(self, player, opponent):
+      self.players[player].bench[pokemonIndex].tool.useEffect(self, player, **effectParams)
     else:
-      self.players[player].bench[pokemonIndex].tool.useAbility(self, player, **effectParams)
+      raise Exception('Cannot use tool effect')
 
   def playStadium(self, player, opponent, handIndex):
     if self.players[player].canPlayStadiumFlag == True:
