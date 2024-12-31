@@ -1414,7 +1414,7 @@ def playItem(game, player, opponent):
     printNonPokemonCard(itemCards[int(text[1])])
     return playItem(game, player, opponent)
   elif text[0] == 'choose' and int(text[1]) < len(itemCards):
-    game.playItem(player, itemCardIndexes[int(text[1])], **determineItemEffectParams(game, player, opponent, itemCards[int(text[1])]))
+    game.playItem(player, itemCardIndexes[int(text[1])], determineItemEffectParams(game, player, opponent, itemCards[int(text[1])]))
 
     return game
   else:
@@ -1454,6 +1454,35 @@ def playStadium(game, player, opponent):
     print('what?')
     return playStadium(game, player, opponent)
 
+def playToolWhichPokemon(game, player):
+  print('\nOnto which Pokemon do you want to attach the Tool?')
+
+  print(f'0   {game.players[player].activePokemon.name} (Active Pokemon)')
+
+  for index, pokemon in enumerate(game.players[player].bench):
+    print(f'{index + 1}   {pokemon.name} (On Bench)')
+
+  print('\nCommands:')
+  print('details {x}: show Pokemon details')
+  print('choose {x}: choose Pokemon')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'details' and int(text[1]) <= len(game.players[player].bench):
+    if int(text[1]) == 0:
+      printPokemon(game.players[player].activePokemon)
+    else:
+      printPokemon(game.players[player].bench[int(text[1]) - 1])
+
+    return playToolWhichPokemon(game, player)
+  elif text[0] == 'choose' and int(text[1]) <= len(game.players[player].bench) + 1:
+    return int(text[1])
+  else:
+    print('what?')
+    return playToolWhichPokemon(game, player)
+
 def playTool(game, player, opponent):
   toolCards = []
   toolCardIndexes = []
@@ -1480,42 +1509,74 @@ def playTool(game, player, opponent):
     printNonPokemonCard(toolCards[int(text[1])])
     return playTool(game, player, opponent)
   elif text[0] == 'choose' and int(text[1]) < len(toolCards):
-    print('\nOnto which Pokemon do you want to attach the Tool?')
+    pokemonChoice = playToolWhichPokemon(game, player)
 
-    print(f'0   {game.players[player].activePokemon.name} (Active Pokemon)')
+    if pokemonChoice == 0:
+      game.playTool(player, toolCardIndexes[int(text[1])], 'activePokemon')
+    else:
+      game.playTool(player, toolCardIndexes[int(text[1])], 'bench', pokemonChoice - 1)
 
-    for index, pokemon in enumerate(game.players[player].bench):
-      print(f'{index + 1}   {pokemon.name} (On Bench)')
+    return game
+  else:
+    print('what?')
+    return playTool(game, player, opponent)
+
+def determineSupporterEffectParams(game, player, opponent, supporter):
+  if supporter.name == 'Boss\'s Orders (Ghetsis)':
+    print('\nPick a Pokemon from your opponent\'s Bench to switch with their Active Pokemon.')
+
+    for index, pokemon in enumerate(game.players[opponent].bench):
+      print(f'{index}   {pokemon.name}')
 
     print('\nCommands:')
-    print('details {x}: show Pokemon details')
+    print('details {x}: get details about Pokemon')
     print('choose {x}: choose Pokemon')
 
     text = input()
 
     text = text.split()
 
-    if text[0] == 'details' and int(text[1]) <= len(game.players[player].bench):
-      if int(text[1]) == 0:
-        printPokemon(game.players[player].activePokemon)
-      else:
-        printPokemon(game.players[player].bench[int(text[1]) - 1])
-
-      return playTool(game, player, opponent)
-    elif text[0] == 'choose' and int(text[1]) <= len(game.players[player].bench):
-      if int(text[1]) == 0:
-        game.players[player].activePokemon.tool = toolCards[int(text[1])]
-      else:
-        game.players[player].bench[int(text[1]) - 1].tool = toolCards[int(text[1])]
-
-      game.players[player].hand.pop(toolCardIndexes[int(text[1])])
-
-      return game
+    if text[0] == 'details' and int(text[1]) < len(game.players[opponent].bench):
+      printPokemon(game.players[opponent].bench[int(text[1])])
+      return determineSupporterEffectParams(game, player, opponent, supporter)
+    elif text[0] == 'choose' and int(text[1]) < len(game.players[opponent].bench):
+      return { 'opponent': opponent, 'benchPokemonIndex': int(text[1]) }
     else:
       print('what?')
-      return playTool(game, player, opponent)
+      return determineSupporterEffectParams(game, player, opponent, supporter)
+
+def playSupporter(game, player, opponent):
+  supporterCards = []
+  supporterCardIndexes = []
+
+  for index, card in enumerate(game.players[player].hand):
+    if card.cardType == CardType.Supporter:
+      supporterCards.append(card)
+      supporterCardIndexes.append(index)
+    
+  print('\nWhich Supporter do you want to play?')
+
+  for index, card in enumerate(supporterCards):
+    print(f'{index}   {card.name}')
+
+  print('\nCommands:')
+  print('details {x}: show supporter card details')
+  print('choose {x}: choose supporter card')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'details' and int(text[1]) < len(supporterCards):
+    printNonPokemonCard(supporterCards[int(text[1])])
+    return playSupporter(game, player, opponent)
+  elif text[0] == 'choose' and int(text[1]) < len(supporterCards):
+    game.playSupporter(player, supporterCardIndexes[int(text[1])])
+
+    return game
   else:
-    print('what
+    print('what?')
+    return playSupporter(game, player, opponent)
 
 humanAttackTurnOptions = {
   'crossFusionStrike': crossFusionStrike,
@@ -1530,5 +1591,6 @@ humanAttackTurnOptions = {
   'evolvePokemon': evolvePokemon,
   'playItem': playItem,
   'playStadium': playStadium,
-  'playTool': playTool
+  'playTool': playTool,
+  'playSupporter': playSupporter
 }
