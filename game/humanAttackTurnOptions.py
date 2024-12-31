@@ -979,6 +979,84 @@ def ultraBallDiscardSecondCard(game, player, hand):
     print('what?')
     return ultraBallDiscardSecondCard(game, player, hand)
 
+def lostVacuumPickCard(game, player, opponent):
+  print('\nPick a card to put into the Lost Zone.')
+
+  count = 0
+  cardInfo = []
+
+  print('\nSTADIUM')
+
+  if game.players[player].stadium != None:
+    print(f'{count}   {game.players[player].stadium.name}')
+
+    count += 1
+    cardInfo.append({ 'lostZoneCardOwner': player, 'lostZoneCardStadium': True})
+  elif game.players[opponent].stadium != None:
+    print(f'{count}   {game.players[opponent].stadium.name}')
+
+    count += 1
+    cardInfo.append({ 'lostZoneCardOwner': opponent, 'lostZoneCardStadium': True})
+
+  print('\nOPPONENT\'S TOOLS')
+
+  if game.players[opponent].activePokemon.tool != None:
+    print(f'{count}  {game.players[opponent].activePokemon.tool.name} 
+          (attached to Active Pokemon {game.players[opponent].activePokemon.name})')
+    
+    count += 1
+    cardInfo.append({ 'lostZoneCardOwner': opponent, 'lostZoneCardStadium': False, 'lostZoneCardLocation': 'activePokemon' })
+
+  for index, pokemon in enumerate(game.players[opponent].bench):
+    if pokemon.tool != None:
+      print(f'{count}  {pokemon.tool.name} (attached to Bench Pokemon {pokemon.name})')
+    
+      count += 1
+      cardInfo.append({ 'lostZoneCardOwner': opponent, 'lostZoneCardStadium': False, 
+                       'lostZoneCardLocation': 'bench', 'lostZoneCardIndex': index })
+
+  print('\nYOUR TOOLS')
+
+  if game.players[player].activePokemon.tool != None:
+    print(f'{count}  {game.players[player].activePokemon.tool.name} 
+          (attached to Active Pokemon {game.players[player].activePokemon.name})')
+
+    count += 1
+    cardInfo.append({ 'lostZoneCardOwner': player, 'lostZoneCardStadium': False, 'lostZoneCardLocation': 'activePokemon' })
+
+  for index, pokemon in enumerate(game.players[player].bench):
+    if pokemon.tool != None:
+      print(f'{count}  {pokemon.tool.name} (attached to Bench Pokemon {pokemon.name})')
+
+      count += 1
+      cardInfo.append({ 'lostZoneCardOwner': player, 'lostZoneCardStadium': False, 
+                       'lostZoneCardLocation': 'bench', 'lostZoneCardIndex': index })
+      
+  print('\nCommands:')
+  print('details {x}: get card details')
+  print('choose {x}: choose card')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'details' and int(text[1]) < len(cardInfo):
+    if cardInfo[int(text[1])]['lostZoneCardStadium']:
+      printNonPokemonCard(game.players[cardInfo[int(text[1])]['lostZoneCardOwner']].stadium)
+    else:
+      if cardInfo[int(text[1])]['lostZoneCardLocation'] == 'activePokemon':
+        printNonPokemonCard(game.players[cardInfo[int(text[1])]['lostZoneCardOwner']].activePokemon.tool)
+      else:
+        printNonPokemonCard(game.players[cardInfo[int(text[1])]['lostZoneCardOwner']]
+                            .bench[cardInfo[int(text[1])]['lostZoneCardIndex']].tool)
+  
+    return lostVacuumPickCard(game, player, opponent)
+  elif text[0] == 'choose' and int(text[1]) < len(cardInfo):
+    return cardInfo[int(text[1])]
+  else:
+    print('what?')
+    return lostVacuumPickCard(game, player, opponent)
+
 def determineItemEffectParams(game, player, opponent, item):
   if item.name == 'Battle VIP Pass':
     basicPokemon = []
@@ -1107,6 +1185,63 @@ def determineItemEffectParams(game, player, opponent, item):
     print('\nCommands:')
     print('details {x}: get details about card')
     print('choose {x}: choose card')
+
+    text = input()
+
+    text = text.split()
+
+    if text[0] == 'details' and int(text[1]) < len(game.players[player].hand):
+      printNonPokemonCard(game.players[player].hand[int(text[1])])
+      return determineItemEffectParams(game, player, opponent, item)
+    elif text[0] == 'choose' and int(text[1]) < len(game.players[player].hand):
+      entryFeeLostZoneCardIndex = int(text[1])
+
+      cardInfo = lostVacuumPickCard(game, player, opponent)
+
+      cardInfo['entryFeeLostZoneCardIndex'] = entryFeeLostZoneCardIndex
+
+      return cardInfo
+    else:
+      print('what?')
+      return determineItemEffectParams(game, player, opponent, item)
+    
+  elif item.name == 'Nest Ball':
+    print('\nPick a Basic Pokemon from your deck to put onto your Bench.')
+
+    basicPokemon = []
+    basicPokemonIndexes = []
+
+    for index, card in enumerate(game.players[player].deck):
+      if card.cardType == CardType.Pokemon and card.stage == Stage.Basic:
+        basicPokemon.append(card)
+        basicPokemonIndexes.append(index)
+
+    if len(basicPokemon) == 0:
+      print('There are no Basic Pokemon in your deck. Nest Ball ends.')
+
+      return { 'pokemonDeckIndex': None }
+
+    for index, pokemon in enumerate(basicPokemon):
+      print(f'{index}   {pokemon.name}')
+
+    print('\nCommands:')
+    print('details {x}: get details about Pokemon')
+    print('choose {x}: choose Pokemon')
+
+    text = input()
+
+    text = text.split()
+
+    if text[0] == 'details' and int(text[1]) < len(basicPokemon):
+      printPokemon(basicPokemon[int(text[1])])
+      return determineItemEffectParams(game, player, opponent, item)
+    elif text[0] == 'choose' and int(text[1]) < len(basicPokemon):
+      return { 'pokemonDeckIndex': basicPokemonIndexes[int(text[1])] }
+    else:
+      print('what?')
+      return determineItemEffectParams(game, player, opponent, item)
+
+
 
     
 

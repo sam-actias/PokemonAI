@@ -836,6 +836,9 @@ class NestBallSAV255:
     self.text = 'Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck.'
     
   def effect(self, game, player, pokemonDeckIndex):
+    if pokemonDeckIndex == None:
+      return game
+    
     if game.players[player].deck[pokemonDeckIndex].stage == Stage.Basic:
       if len(game.players[player].bench) <= 4:
         game.players[player].bench.append(game.players[player].deck.pop(pokemonDeckIndex))
