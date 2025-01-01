@@ -645,7 +645,7 @@ class CrystalCaveES230:
     self.name = 'Crystal Cave'
     self.text = 'Once during each player\'s turn, that player may heal 30 damage from each of their Metal Pokémon and Dragon Pokémon.'
 
-  def effect(self, game, player):
+  def effect(self, game, player, opponent):
     if game.players[player].activePokemon.type == EnergyType.Metal or game.players[player].activePokemon.type == EnergyType.Dragon:
       game.players[player].activePokemon.hp += 30
 

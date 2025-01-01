@@ -282,6 +282,20 @@ class Game:
 
     raise Exception('Can\'t play a Supporter more than once in a single turn')
   
+  def useStadiumEffect(self, player, opponent, effectParams):
+    if self.players[player].stadium:
+      if effectParams == None:
+        self.players[player].stadium.effect(self, player, opponent)
+      else:
+        self.players[player].stadium.effect(self, player, opponent, **effectParams)
+    elif self.players[opponent].stadium:
+      if effectParams == None:
+        self.players[opponent].stadium.effect(self, player, opponent)
+      else:
+        self.players[opponent].stadium.effect(self, player, opponent, **effectParams)
+    else:
+      raise Exception('No stadium in play')
+  
   def attachEnergy(self, player, energyHandIndex, pokemonLocation, pokemonIndex = None):
     energyCard = self.players[player].hand.pop(energyHandIndex)
 

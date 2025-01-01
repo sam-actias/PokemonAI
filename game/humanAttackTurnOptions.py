@@ -1734,6 +1734,91 @@ def attachEnergy(game, player):
     print('what?')
     return attachEnergy(game, player)
 
+def determineStadiumEffectParams(game, player, opponent, stadium):
+  if stadium.name == 'Crystal Cave':
+    return None
+
+def useStadiumEffect(game, player, opponent):
+  effectParams = determineStadiumEffectParams(game, player, opponent, game.players[player].stadium)
+
+  game.useStadiumEffect(player, opponent, effectParams)
+
+  return game
+
+def determineToolEffectParams(game, player, opponent, tool):
+  if tool.name == 'Forest Seal Stone':
+    print('\nWhich card from your deck do you want to put in your hand?')
+
+    for index, card in enumerate(game.players[player].deck):
+      print(f'{index}   {card.name}')
+
+    print('\nCommands:')
+    print('details {x}: get details about card')
+    print('choose {x}: choose card')
+
+    text = input()
+
+    text = text.split()
+
+    if text[0] == 'details' and int(text[1]) < len(game.players[player].deck):
+      printNonPokemonCard(game.players[player].deck[int(text[1])])
+      return determineToolEffectParams(game, player, opponent, tool)
+    elif text[0] == 'choose' and int(text[1]) < len(game.players[player].deck):
+      return { 'deckCardIndex': int(text[1]) }
+    else:
+      print('what?')
+      return determineToolEffectParams(game, player, opponent, tool)
+  else:
+    raise Exception('invalid tool')
+
+def useToolEffect(game, player, opponent):
+  print('\nWhich Pokemon\'s Tool effect do you want to use?')
+
+  if game.players[player].activePokemon.tool != None:
+    print(f'0   {game.players[player].activePokemon.name} (Active Pokemon)')
+
+  for index, pokemon in enumerate(game.players[player].bench):
+    if pokemon.tool != None:
+      print(f'{index + 1}   {pokemon.name} (On Bench)')
+
+  print('\nCommands:')
+  print('details {x}: show Pokemon details')
+  print('tool {x}: show Pokemon tool details')
+  print('choose {x}: choose Pokemon')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'details' and int(text[1]) <= len(game.players[player].bench) + 1:
+    if int(text[1]) == 0:
+      printPokemon(game.players[player].activePokemon)
+    else:
+      printPokemon(game.players[player].bench[int(text[1]) - 1])
+
+    return useToolEffect(game, player, opponent)
+  elif text[0] == 'tool' and int(text[1]) <= len(game.players[player].bench) + 1:
+    if int(text[1]) == 0:
+      printNonPokemonCard(game.players[player].activePokemon.tool)
+    else:
+      printNonPokemonCard(game.players[player].bench[int(text[1]) - 1].tool)
+
+    return useToolEffect(game, player, opponent)
+  elif text[0] == 'choose' and int(text[1]) <= len(game.players[player].bench) + 1:
+    if int(text[1]) == 0:
+      effectParams = determineToolEffectParams(game, player, opponent, game.players[player].activePokemon.tool)
+
+      game.useToolEffect(player, opponent, effectParams, 'activePokemon')
+    else:
+      effectParams = determineToolEffectParams(game, player, opponent, game.players[player].bench[int(text[1]) - 1].tool)
+
+      game.useToolEffect(player, opponent, effectParams, 'bench', int(text[1]) - 1)
+
+    return game
+  else:
+    print('what?')
+    return useToolEffect(game, player, opponent)
+
 humanAttackTurnOptions = {
   'crossFusionStrike': crossFusionStrike,
   'maxMiracle': maxMiracle,
@@ -1749,5 +1834,7 @@ humanAttackTurnOptions = {
   'playStadium': playStadium,
   'playTool': playTool,
   'playSupporter': playSupporter,
-  'attachEnergy': attachEnergy
+  'attachEnergy': attachEnergy,
+  'useStadiumEffect': useStadiumEffect,
+  'useToolEffect': useToolEffect
 }

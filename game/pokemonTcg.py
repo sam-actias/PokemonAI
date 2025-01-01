@@ -93,7 +93,9 @@ def determineTurnOptions(game, player, opponent):
               and move['canDo'](game, player)):
         turnOptions.append(move)
 
-    # reduce to unique entrants
+  uniqueTurnOptions = list(set(turnOptions))
+
+  return uniqueTurnOptions
 
 def pickActivePokemon(game):
   print('\nPick a Basic Pokemon from your hand to be your active Pokemon.\n')
