@@ -1521,6 +1521,45 @@ def playTool(game, player, opponent):
     print('what?')
     return playTool(game, player, opponent)
 
+def elesasSparkleChooseSecondPokemon(game, player, fusionStrikePokemon, fusionStrikePokemonLocations):
+  print('\nDo you want to pick a second Fusion Strike Pokemon to attach a Fusion Strike Energy from your deck to (if one is found while searching)?')
+
+  print('\nCommands:')
+  print('yes')
+  print('no')
+
+  text = input()
+
+  if text == 'no':
+    return None, None
+
+  for index, pokemon in enumerate(fusionStrikePokemon):
+    print(f'{index}   {pokemon.name}')
+
+  print('\nCommands:')
+  print('details {x}: get details about Pokemon')
+  print('choose {x}: choose Pokemon')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'details' and int(text[1]) < len(fusionStrikePokemon):
+    printPokemon(fusionStrikePokemon[int(text[1])])
+    return elesasSparkleChooseSecondPokemon(game, player)
+  elif text[0] == 'choose' and int(text[1]) < len(fusionStrikePokemon):
+    if int(text[1]) == 0:
+      pokemon2Location = 'activePokemon'
+      pokemon2Index = None
+    else:
+      pokemon2Location = 'bench'
+      pokemon2Index = int(text[1]) - 1
+
+    return pokemon1Location, pokemon1Index
+  else:
+    print('what?')
+    return elesasSparkleChooseSecondPokemon(game, player)
+
 def determineSupporterEffectParams(game, player, opponent, supporter):
   if supporter.name == 'Boss\'s Orders (Ghetsis)':
     print('\nPick a Pokemon from your opponent\'s Bench to switch with their Active Pokemon.')
@@ -1544,6 +1583,56 @@ def determineSupporterEffectParams(game, player, opponent, supporter):
     else:
       print('what?')
       return determineSupporterEffectParams(game, player, opponent, supporter)
+  
+  elif supporter.name == 'Elesa\'s Sparkle':
+    print('\nChoose a Fusion Strike Pokemon to attach a Fusion Strike Energy card from your deck to (if you have one upon searching.)')
+
+    fusionStrikePokemon = []
+    fusionStrikePokemonLocations = []
+
+    if game.players[player].activePokemon.fusionStrike:
+      fusionStrikePokemon.append(game.players[player].activePokemon)
+      fusionStrikePokemonLocations.append({ 'location': 'activePokemon', 'index': None })
+
+    for index, pokemon in enumerate(game.players[player].bench):
+      if pokemon.fusionStrike:
+        fusionStrikePokemon.append(pokemon)
+        fusionStrikePokemonLocations.append({ 'location': 'bench', 'index': index })
+
+    for index, pokemon in enumerate(fusionStrikePokemon):
+      print(f'{index}   {pokemon.name}')
+
+    print('\nCommands:')
+    print('details {x}: get details about Pokemon')
+    print('choose {x}: choose Pokemon')
+
+    text = input()
+
+    text = text.split()
+
+    if text[0] == 'details' and int(text[1]) < len(fusionStrikePokemon):
+      printPokemon(fusionStrikePokemon[int(text[1])])
+      return determineSupporterEffectParams(game, player, opponent, supporter)
+    elif text[0] == 'choose' and int(text[1]) < len(fusionStrikePokemon):
+      if int(text[1]) == 0:
+        pokemon1Location = 'activePokemon'
+        pokemon1Index = None
+      else:
+        pokemon1Location = 'bench'
+        pokemon1Index = int(text[1]) - 1
+
+      fusionStrikePokemon.pop(int(text[1]))
+      fusionStrikePokemonLocations.pop(int(text[1]))
+
+      pokemon2Location, pokemon2Index = elesasSparkleChooseSecondPokemon(game, player, fusionStrikePokemon, fusionStrikePokemonLocations)
+
+      return { 'pokemon1Location': pokemon1Location, 'pokemon1Index': pokemon1Index, 'pokemon2Location': pokemon2Location, 'pokemon2Index': pokemon2Index }
+    else:
+      print('what?')
+      return determineSupporterEffectParams(game, player, opponent, supporter)
+    
+  elif supporter.name == 'Iono' or supporter.name == 'Judge':
+    return { 'opponent': opponent }
 
 def playSupporter(game, player, opponent):
   supporterCards = []
@@ -1578,6 +1667,73 @@ def playSupporter(game, player, opponent):
     print('what?')
     return playSupporter(game, player, opponent)
 
+def attachEnergyPickPokemon(game, player):
+  print('\nOnto which Pokemon do you want to attach the Energy?')
+
+  print(f'0   {game.players[player].activePokemon.name} (Active Pokemon)')
+
+  for index, pokemon in enumerate(game.players[player].bench):
+    print(f'{index + 1}   {pokemon.name} (On Bench)')
+
+  print('\nCommands:')
+  print('details {x}: show Pokemon details')
+  print('choose {x}: choose Pokemon')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'details' and int(text[1]) <= len(game.players[player].bench) + 1:
+    if int(text[1]) == 0:
+      printPokemon(game.players[player].activePokemon)
+    else:
+      printPokemon(game.players[player].bench[int(text[1]) - 1])
+
+    return attachEnergyPickPokemon(game, player)
+  elif text[0] == 'choose' and int(text[1]) <= len(game.players[player].bench) + 1:
+    if int(text[1]) == 0:
+      return 'activePokemon', None
+    else:
+      return 'bench', int(text[1]) - 1
+  else:
+    print('what?')
+    return attachEnergyPickPokemon(game, player)
+
+def attachEnergy(game, player):
+  print('\nWhich Energy card do you want to attach?')
+
+  energyCards = []
+  energyCardIndexes = []
+
+  for index, card in enumerate(game.players[player].hand):
+    if card.cardType == CardType.Energy:
+      energyCards.append(card)
+      energyCardIndexes.append(index)
+
+  for index, card in enumerate(energyCards):
+    print(f'{index}   {card.name}')
+
+  print('\nCommands:')
+  print('details {x}: show energy card details')
+  print('choose {x}: choose energy card')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'details' and int(text[1]) < len(energyCards):
+    printNonPokemonCard(energyCards[int(text[1])])
+    return attachEnergy(game, player)
+  elif text[0] == 'choose' and int(text[1]) < len(energyCards):
+    pokemonLocation, pokemonIndex = attachEnergyPickPokemon(game, player)
+
+    game.attachEnergy(player, energyCardIndexes[int(text[1]), pokemonLocation, pokemonIndex])
+
+    return game
+  else:
+    print('what?')
+    return attachEnergy(game, player)
+
 humanAttackTurnOptions = {
   'crossFusionStrike': crossFusionStrike,
   'maxMiracle': maxMiracle,
@@ -1592,5 +1748,6 @@ humanAttackTurnOptions = {
   'playItem': playItem,
   'playStadium': playStadium,
   'playTool': playTool,
-  'playSupporter': playSupporter
+  'playSupporter': playSupporter,
+  'attachEnergy': attachEnergy
 }
