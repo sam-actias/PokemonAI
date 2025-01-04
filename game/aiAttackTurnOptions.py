@@ -1,14 +1,86 @@
 from naiveAI import naiveAiChoose
+from enums import CardType, EnergyType, Stage
 
 aiChoose = naiveAiChoose
 
+def crossFusionStrikePsychicLeapShuffleIn(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex):
+  shuffleIn = True
+
+  if len(game.players[player].bench) == 1:
+    newActivePokemonIndex = 0
+  else:
+    print('\nWhat bench Pokemon do you want to replace Mew VMAX as your active Pokemon?')
+
+    for index, pokemon in enumerate(game.players[player].bench):
+      print(f'{index}   {pokemon.name}')
+
+    print('\nCommands:')
+    print('details {x}: card details')
+    print('choose {x}: choose a Pokemon\n')
+
+    text = input()
+  
+    text = text.split()
+
+    if text[0] == 'details' and int(text[1]) < len(game.players[player].bench):
+      printPokemon(game.players[player].bench[int(text[1])])
+      return crossFusionStrikePsychicLeapShuffleIn(game, player, opponent)
+    elif text[0] == 'choose' and int(text[1]) < len(game.players[player].bench):
+      return game.players[player].activePokemon.moves['crossFusionStrike']['do'](game, player, 
+          benchedFusionStrikeIndexes[moveIndex], benchedFusionStrikeMoves[moveIndex].name, { 'game': game, 
+          'player': player, 'opponent': opponent, 'shuffleIn': True, 'newActivePokemonIndex': int(text[1]) })
+    else:
+      print('What?\n')
+      return crossFusionStrikePsychicLeapShuffleIn(game, player, opponent)
+
+def crossFusionStrikeEnergyMixPickPokemon(game, player, opponent, energyCardNames, 
+  benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex, energyCardIndexes, energyCardIndex):
+  fusionStrikePokemon = []
+
+  if game.players[player].activePokemon.fusionStrike:
+    fusionStrikePokemon.append({ 'pokemonName': game.players[player].activePokemon.name, 
+                                'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
+
+  for index, pokemon in enumerate(game.players[player].bench):
+    if pokemon.fusionStrike:
+      fusionStrikePokemon.append({ 'pokemonName': pokemon.name, 'pokemonLocation': 'bench', 'pokemonIndex': index })
+
+  print(f'\nPick a Pokemon to attach {energyCardNames[int(text[1])]} to.')
+
+  for index, pokemon in enumerate(fusionStrikePokemon):
+    print(f'{index}   {pokemon['pokemonName']}')
+
+  print('\nCommands:')
+  print('details {x}: card details')
+  print('choose {x}: choose a Pokemon\n')
+
+  text = input()
+
+  text = text.split()
+
+  choose = aiChoose(fusionStrikePokemon)
+
+  print(f'Your opponent chose {fusionStrikePokemon[choose]["pokemonName"]} to attach {energyCardNames[energyCardIndex]} to.')
+
+  # TODO: modify so that vars get returned instead of using the game method here?
+  return game.players[player].activePokemon.moves['crossFusionStrike']['do'](game, player, 
+      benchedFusionStrikeIndexes[moveIndex], benchedFusionStrikeMoves[moveIndex].name, { 'game': game, 'player': player, 
+      'deckIndex': energyCardIndexes[energyCardIndex], 'pokemonLocation': fusionStrikePokemon[int(text[1])]['pokemonLocation'], 
+      'pokemonIndex': fusionStrikePokemon[choose]['pokemonIndex'] })
+
 def crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex):
-  if (benchedFusionStrikeMoves[moveIndex].name == 'maxMiracle' or benchedFusionStrikeMoves[moveIndex].name == 'technoBlast' or 
+  if benchedFusionStrikeMoves[moveIndex].name == 'maxMiracle':
+     
+    
+    
+     or benchedFusionStrikeMoves[moveIndex].name == 'technoBlast' or 
        benchedFusionStrikeMoves[moveIndex].name == 'melodiousEcho'):
     return game.players[player].activePokemon.moves['crossFusionStrike']['do'](game, player, 
           benchedFusionStrikeIndexes[moveIndex], benchedFusionStrikeMoves[moveIndex].name, 
           { 'game': game, 'player': player, 'opponent': opponent })
   elif benchedFusionStrikeMoves[moveIndex].name == 'energyMix':
+    print('Mew VMAX used benched Fusion Strike Pokemon Mew V\'s Energy Mix attack.')
+
     energyCardNames = []
     energyCardIndexes = []
 
@@ -20,41 +92,20 @@ def crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMove
     energyCardNamesAmt = len(energyCardNames)
 
     if energyCardNamesAmt == 0:
-      print('There are no energy cards in your deck. Energy Mix ends.')
+      print('There are no energy cards in your opponent\'s deck. Energy Mix ends.')
 
       game.players[player].deck = game.shuffle(game.players[player].deck)
 
       return game
 
-    print('\nPick an energy card you want to attach to one of your Fusion Strike Pokemon.')
+    print('\nYour opponent picks an energy card they want to attach to one of their Fusion Strike Pokemon.')
 
-    for i in range(energyCardNamesAmt):
-      print(f'{i}   {energyCardNames[i]}')
+    energyCardIndex = aiChoose(energyCardNames)
 
-    print('\nCommands:')
-    print('details {x}: card details')
-    print('choose {x}: choose an energy card\n')
+    print(f'\nYour opponent picks {energyCardNames[energyCardIndex]} energy card from their deck to attach to one of their Fusion Strike Pokemon.')
 
-    text = input()
-
-    text = text.split()
-
-    energyCardIndex = int(text[1])
-
-    if text[0] == 'details':
-      if energyCardNames[energyCardIndex] == 'Fusion Strike Energy':
-        printNonPokemonCard(FusionStrikeEnergyFS244())
-      elif energyCardNames[energyCardIndex] == 'Double Turbo Energy':
-        printNonPokemonCard(DoubleTurboEnergyBS151())
-      else:
-        print('what?')
-        return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
-    elif text[0] == 'choose':
-      return crossFusionStrikeEnergyMixPickPokemon(game, player, opponent, energyCardNames, 
-                benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex, energyCardIndexes, energyCardIndex)
-    else:
-      print('what?')
-      return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
+    return crossFusionStrikeEnergyMixPickPokemon(game, player, opponent, energyCardNames, 
+              benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex, energyCardIndexes, energyCardIndex)
 
   elif benchedFusionStrikeMoves[moveIndex].name == 'psychicLeap':
     if len(game.players[player].bench) == 0:
@@ -69,9 +120,12 @@ def crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMove
 
     text = input()
 
-    if text =='yes':
+    chooseYesNo = aiChoose(['no', 'yes'])
+
+    if chooseYesNo:
+      print('Your opponent chose to shuffle Mew VMAX and all attached cards into their deck as part of the Psychic Leap.')
       crossFusionStrikePsychicLeapShuffleIn(game, player, opponent)
-    elif text != 'no':
+    else:
       print('what?')
       return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
 
@@ -249,6 +303,8 @@ def crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMove
 
 
 def crossFusionStrike(game, player, opponent):
+  print('Your opponent used Mew VMAX\'s Cross Fusion Strike attack.')
+
   benchedFusionStrikeIndexes = []
   benchedFusionStrikeMoves = []
 
