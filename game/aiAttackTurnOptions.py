@@ -28,7 +28,7 @@ def crossFusionStrikePsychicLeapShuffleIn(game, player, opponent, benchedFusionS
         benchedFusionStrikeIndexes[moveIndex], benchedFusionStrikeMoves[moveIndex].name, { 'game': game, 
         'player': player, 'opponent': opponent, 'shuffleIn': True, 'newActivePokemonIndex': int(text[1]) })
     
-def crossFusionStrikeEnergyMixPickPokemon(game, player, opponent, energyCardNames, 
+def crossFusionStrikeEnergyMixPickPokemon(game, player, energyCardNames, 
   benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex, energyCardIndexes, energyCardIndex):
   fusionStrikePokemon = []
 
@@ -111,7 +111,7 @@ def crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMove
 
     print(f'\nYour opponent picks {energyCardNames[energyCardIndex]} energy card from their deck to attach to one of their Fusion Strike Pokemon.')
 
-    return crossFusionStrikeEnergyMixPickPokemon(game, player, opponent, energyCardNames, 
+    return crossFusionStrikeEnergyMixPickPokemon(game, player, energyCardNames, 
               benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex, energyCardIndexes, energyCardIndex)
 
   elif benchedFusionStrikeMoves[moveIndex].name == 'psychicLeap':
@@ -223,9 +223,6 @@ def crossFusionStrike(game, player, opponent):
     moveIndex = benchedFusionStrikeIndexes[aiChoose(benchedFusionStrikeIndexes)]
 
     return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
-  else:
-    print('what?')
-    return crossFusionStrike(game, player)
 
 humanAttackTurnOptions = {
   'crossFusionStrike': crossFusionStrike,
