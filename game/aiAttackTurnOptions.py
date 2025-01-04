@@ -4,8 +4,6 @@ from enums import CardType, EnergyType, Stage
 aiChoose = naiveAiChoose
 
 def crossFusionStrikePsychicLeapShuffleIn(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex):
-  shuffleIn = True
-
   if len(game.players[player].bench) == 1:
     newActivePokemonIndex = 0
   else:
@@ -22,17 +20,14 @@ def crossFusionStrikePsychicLeapShuffleIn(game, player, opponent, benchedFusionS
   
     text = text.split()
 
-    if text[0] == 'details' and int(text[1]) < len(game.players[player].bench):
-      printPokemon(game.players[player].bench[int(text[1])])
-      return crossFusionStrikePsychicLeapShuffleIn(game, player, opponent)
-    elif text[0] == 'choose' and int(text[1]) < len(game.players[player].bench):
-      return game.players[player].activePokemon.moves['crossFusionStrike']['do'](game, player, 
-          benchedFusionStrikeIndexes[moveIndex], benchedFusionStrikeMoves[moveIndex].name, { 'game': game, 
-          'player': player, 'opponent': opponent, 'shuffleIn': True, 'newActivePokemonIndex': int(text[1]) })
-    else:
-      print('What?\n')
-      return crossFusionStrikePsychicLeapShuffleIn(game, player, opponent)
+    choose = aiChoose(game.players[player].bench)
 
+    print(f'Your opponent chose {game.players[player].bench[choose].name} to replace Mew VMAX as their active Pokemon.')
+
+    return game.players[player].activePokemon.moves['crossFusionStrike']['do'](game, player, 
+        benchedFusionStrikeIndexes[moveIndex], benchedFusionStrikeMoves[moveIndex].name, { 'game': game, 
+        'player': player, 'opponent': opponent, 'shuffleIn': True, 'newActivePokemonIndex': int(text[1]) })
+    
 def crossFusionStrikeEnergyMixPickPokemon(game, player, opponent, energyCardNames, 
   benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex, energyCardIndexes, energyCardIndex):
   fusionStrikePokemon = []
@@ -70,14 +65,26 @@ def crossFusionStrikeEnergyMixPickPokemon(game, player, opponent, energyCardName
 
 def crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex):
   if benchedFusionStrikeMoves[moveIndex].name == 'maxMiracle':
-     
-    
-    
-     or benchedFusionStrikeMoves[moveIndex].name == 'technoBlast' or 
-       benchedFusionStrikeMoves[moveIndex].name == 'melodiousEcho'):
+    print('Mew VMAX used benched Fusion Strike Pokemon Mew VMAX\'s Max Miracle attack.')
+
     return game.players[player].activePokemon.moves['crossFusionStrike']['do'](game, player, 
           benchedFusionStrikeIndexes[moveIndex], benchedFusionStrikeMoves[moveIndex].name, 
           { 'game': game, 'player': player, 'opponent': opponent })
+  
+  elif benchedFusionStrikeMoves[moveIndex].name == 'technoBlast':
+    print('Mew VMAX used benched Fusion Strike Pokemon Genesect\'s Techno Blast attack.')
+
+    return game.players[player].activePokemon.moves['crossFusionStrike']['do'](game, player, 
+          benchedFusionStrikeIndexes[moveIndex], benchedFusionStrikeMoves[moveIndex].name, 
+          { 'game': game, 'player': player, 'opponent': opponent })
+  
+  elif benchedFusionStrikeMoves[moveIndex].name == 'melodiousEcho':
+    print('Mew VMAX used benched Fusion Strike Pokemon Meloetta\'s Melodious Echo attack.')
+
+    return game.players[player].activePokemon.moves['crossFusionStrike']['do'](game, player, 
+          benchedFusionStrikeIndexes[moveIndex], benchedFusionStrikeMoves[moveIndex].name, 
+          { 'game': game, 'player': player, 'opponent': opponent })
+  
   elif benchedFusionStrikeMoves[moveIndex].name == 'energyMix':
     print('Mew VMAX used benched Fusion Strike Pokemon Mew V\'s Energy Mix attack.')
 
@@ -108,26 +115,18 @@ def crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMove
               benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex, energyCardIndexes, energyCardIndex)
 
   elif benchedFusionStrikeMoves[moveIndex].name == 'psychicLeap':
+    print('Mew VMAX used benched Fusion Strike Pokemon Mew V\'s Psychic Leap attack.')
     if len(game.players[player].bench) == 0:
+      print('There are no benched Pokemon to replace Mew VMAX, so cannot shuffle Mew VMAX into the deck. Psychic Leap ends.')
       return game.players[player].activePokemon.moves['crossFusionStrike']['do'](game, player, 
           benchedFusionStrikeIndexes[moveIndex], benchedFusionStrikeMoves[moveIndex].name, { 'game': game, 
           'player': player, 'opponent': opponent, 'shuffleIn': False })
-
-    print('\nDo you want to shuffle Mew VMAX and all attached cards into your deck as part of the Psychic Leap?')
-    print('\nCommands:')
-    print('yes: shuffle Mew VMAX and all attached cards into your deck')
-    print('no: don\'t shuffle Mew VMAX and all attached cards into your deck\n')
-
-    text = input()
 
     chooseYesNo = aiChoose(['no', 'yes'])
 
     if chooseYesNo:
       print('Your opponent chose to shuffle Mew VMAX and all attached cards into their deck as part of the Psychic Leap.')
       crossFusionStrikePsychicLeapShuffleIn(game, player, opponent)
-    else:
-      print('what?')
-      return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
 
     return game.players[player].activePokemon.moves['crossFusionStrike']['do'](game, player, 
           benchedFusionStrikeIndexes[moveIndex], benchedFusionStrikeMoves[moveIndex].name, { 'game': game, 
@@ -142,165 +141,71 @@ def crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMove
     
     howToPutDamageCounters = []
 
-    print('\nOn which Pokemon do you want to put the first damage counter (10 HP)?')
+    availablePokemon = []
 
-    print(f'0   {game.players[opponent].activePokemon.name} (Active Pokemon)')
+    availablePokemon.append(game.players[opponent].activePokemon)
 
     for index, pokemon in enumerate(game.players[opponent].bench):
-      print(f'{index + 1}   {game.players[opponent].bench[index].name} (On Bench)')
+      availablePokemon.append(pokemon)
 
-    print('\nCommands:')
-    print('details {x}: card details')
-    print('choose {x}: choose a Pokemon\n')
+    choose1 = aiChoose(game.players[opponent].bench)
 
-    text = input()
+    if choose1 == 0:
+      howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
 
-    text = text.split()
-
-    if text[0] == 'details' and int(text[1]) <= len(game.players[opponent].bench):
-      if int(text[1]) == 0:
-        printPokemon(game.players[opponent].activePokemon)
-      else:
-        printPokemon(game.players[opponent].bench[int(text[1]) - 1])
-
-      return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
-    if text[0] == 'choose' and int(text[1]) <= len(game.players[opponent].bench):
-      if int(text[1]) == 0:
-        howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
-      else:
-        howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': int(text[1]) - 1 })
+      print(f'\nYour opponent chose {game.players[opponent].activePokemon.name} to put the first damage counter (10 HP) on.')
     else:
-      print('what?')
-      return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
+      howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': choose1 - 1 })
+
+      print(f'\nYour opponent chose {game.players[opponent].bench[choose1 - 1].name} to put the first damage counter (10 HP) on.')
     
-    print('\nOn which Pokemon do you want to put the second damage counter (10 HP)?')
+    choose2 = aiChoose(game.players[opponent].bench)
 
-    print(f'0   {game.players[opponent].activePokemon.name} (Active Pokemon)')
+    if choose2 == 0:
+      howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
 
-    for index, pokemon in enumerate(game.players[opponent].bench):
-      print(f'{index + 1}   {game.players[opponent].bench[index].name} (On Bench)')
-
-    print('\nCommands:')
-    print('details {x}: card details')
-    print('choose {x}: choose a Pokemon\n')
-
-    text = input()
-
-    text = text.split()
-
-    if text[0] == 'details' and int(text[1]) <= len(game.players[opponent].bench):
-      if int(text[1]) == 0:
-        printPokemon(game.players[opponent].activePokemon)
-      else:
-        printPokemon(game.players[opponent].bench[int(text[1]) - 1])
-
-      return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
-    if text[0] == 'choose' and int(text[1]) <= len(game.players[opponent].bench):
-      if int(text[1]) == 0:
-        howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
-      else:
-        howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': int(text[1]) - 1 })
+      print(f'\nYour opponent chose {game.players[opponent].activePokemon.name} to put the first damage counter (10 HP) on.')
     else:
-      print('what?')
-      return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
-    
-    print('\nOn which Pokemon do you want to put the third damage counter (10 HP)?')
+      howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': choose2 - 1 })
 
-    print(f'0   {game.players[opponent].activePokemon.name} (Active Pokemon)')
+      print(f'\nYour opponent chose {game.players[opponent].bench[choose1 - 1].name} to put the first damage counter (10 HP) on.')
 
-    for index, pokemon in enumerate(game.players[opponent].bench):
-      print(f'{index + 1}   {game.players[opponent].bench[index].name} (On Bench)')
+    choose3 = aiChoose(game.players[opponent].bench)
 
-    print('\nCommands:')
-    print('details {x}: card details')
-    print('choose {x}: choose a Pokemon\n')
+    if choose3 == 0:
+      howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
 
-    text = input()
-
-    text = text.split()
-
-    if text[0] == 'details' and int(text[1]) <= len(game.players[opponent].bench):
-      if int(text[1]) == 0:
-        printPokemon(game.players[opponent].activePokemon)
-      else:
-        printPokemon(game.players[opponent].bench[int(text[1]) - 1])
-
-      return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
-    if text[0] == 'choose' and int(text[1]) <= len(game.players[opponent].bench):
-      if int(text[1]) == 0:
-        howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
-      else:
-        howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': int(text[1]) - 1 })
+      print(f'\nYour opponent chose {game.players[opponent].activePokemon.name} to put the first damage counter (10 HP) on.')
     else:
-      print('what?')
-      return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
-    
-    print('\nOn which Pokemon do you want to put the fourth damage counter (10 HP)?')
+      howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': choose3- 1 })
 
-    print(f'0   {game.players[opponent].activePokemon.name} (Active Pokemon)')
+      print(f'\nYour opponent chose {game.players[opponent].bench[choose1 - 1].name} to put the first damage counter (10 HP) on.')
 
-    for index, pokemon in enumerate(game.players[opponent].bench):
-      print(f'{index + 1}   {game.players[opponent].bench[index].name} (On Bench)')
+    choose4 = aiChoose(game.players[opponent].bench)
 
-    print('\nCommands:')
-    print('details {x}: card details')
-    print('choose {x}: choose a Pokemon\n')
+    if choose4 == 0:
+      howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
 
-    text = input()
-
-    text = text.split()
-
-    if text[0] == 'details' and int(text[1]) <= len(game.players[opponent].bench):
-      if int(text[1]) == 0:
-        printPokemon(game.players[opponent].activePokemon)
-      else:
-        printPokemon(game.players[opponent].bench[int(text[1]) - 1])
-
-      return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
-    if text[0] == 'choose' and int(text[1]) <= len(game.players[opponent].bench):
-      if int(text[1]) == 0:
-        howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
-      else:
-        howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': int(text[1]) - 1 })
+      print(f'\nYour opponent chose {game.players[opponent].activePokemon.name} to put the first damage counter (10 HP) on.')
     else:
-      print('what?')
-      return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
-    
-    print('\nOn which Pokemon do you want to put the fifth damage counter (10 HP)?')
+      howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': choose4 - 1 })
 
-    print(f'0   {game.players[opponent].activePokemon.name} (Active Pokemon)')
+      print(f'\nYour opponent chose {game.players[opponent].bench[choose1 - 1].name} to put the first damage counter (10 HP) on.')
 
-    for index, pokemon in enumerate(game.players[opponent].bench):
-      print(f'{index + 1}   {game.players[opponent].bench[index].name} (On Bench)')
+    choose5 = aiChoose(game.players[opponent].bench)
 
-    print('\nCommands:')
-    print('details {x}: card details')
-    print('choose {x}: choose a Pokemon\n')
+    if choose5 == 0:
+      howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
 
-    text = input()
-
-    text = text.split()
-
-    if text[0] == 'details' and int(text[1]) <= len(game.players[opponent].bench):
-      if int(text[1]) == 0:
-        printPokemon(game.players[opponent].activePokemon)
-      else:
-        printPokemon(game.players[opponent].bench[int(text[1]) - 1])
-
-      return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
-    if text[0] == 'choose' and int(text[1]) <= len(game.players[opponent].bench):
-      if int(text[1]) == 0:
-        howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
-      else:
-        howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': int(text[1]) - 1 })
+      print(f'\nYour opponent chose {game.players[opponent].activePokemon.name} to put the first damage counter (10 HP) on.')
     else:
-      print('what?')
-      return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
+      howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': choose5 - 1 })
+
+      print(f'\nYour opponent chose {game.players[opponent].bench[choose1 - 1].name} to put the first damage counter (10 HP) on.')
       
     return game.players[player].activePokemon.moves['crossFusionStrike']['do'](game, player, 
                 benchedFusionStrikeIndexes[moveIndex], benchedFusionStrikeMoves[moveIndex].name, { 'game': game,
                 'player': player, 'opponent': opponent, 'howToPutDamageCounters': howToPutDamageCounters })
-
 
 def crossFusionStrike(game, player, opponent):
   print('Your opponent used Mew VMAX\'s Cross Fusion Strike attack.')
