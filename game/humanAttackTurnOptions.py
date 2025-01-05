@@ -15,7 +15,7 @@ def energyMixPickPokemon(game, player, energyCardNames, energyCardIndexes, energ
     if pokemon.fusionStrike:
       fusionStrikePokemon.append({ 'pokemonName': pokemon.name, 'pokemonLocation': 'bench', 'pokemonIndex': index })
 
-  print(f'\nPick a Pokemon to attach {energyCardNames[int(text[1])]} to.')
+  print(f'\nPick a Pokemon to attach {energyCardNames[energyCardIndex]} to.')
 
   for index, pokemon in enumerate(fusionStrikePokemon):
     print(f'{index}   {pokemon['pokemonName']}')
@@ -420,8 +420,8 @@ def energyMix(game, player, opponent):
   energyCardIndex = int(text[1])
 
   if text[0] == 'details':
-    # TODO: add display energy card details
-    print('nothing here yet')
+    printNonPokemonCard(energyCardIndexes[energyCardIndex])
+    return energyMix(game, player)
   elif text[0] == 'choose':
     return energyMixPickPokemon(game, player, energyCardNames, energyCardIndexes, energyCardIndex)
   else:
@@ -429,10 +429,11 @@ def energyMix(game, player, opponent):
     return energyMix(game, player)
 
 def psychicLeapShuffleIn(game, player, opponent):
-  shuffleIn = True
-
   if len(game.players[player].bench) == 1:
     newActivePokemonIndex = 0
+
+    return game.players[player].activePokemon.moves['psychicLeap']['do'](game, player, opponent,
+                      True, newActivePokemonIndex)
   else:
     print('\nWhat bench Pokemon do you want to replace Mew VMAX as your active Pokemon?')
 
@@ -456,7 +457,6 @@ def psychicLeapShuffleIn(game, player, opponent):
     else:
       print('What?\n')
       return psychicLeapShuffleIn(game, player, opponent)
-
 
 def psychicLeap(game, player, opponent):
   if len(game.players[player].bench) == 0:
