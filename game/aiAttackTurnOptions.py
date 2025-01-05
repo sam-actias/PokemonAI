@@ -224,6 +224,11 @@ def crossFusionStrike(game, player, opponent):
 
     return crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex)
 
+def maxMiracle(game, player, opponent):
+  print('Your opponent used Mew VMAX\'s Max Miracle attack.')
+
+  return game.players[player].activePokemon.moves['maxMiracle']['do'](game, player, opponent)
+
 humanAttackTurnOptions = {
   'crossFusionStrike': crossFusionStrike,
   'maxMiracle': maxMiracle,
