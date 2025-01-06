@@ -651,26 +651,26 @@ def glisteningDroplets(game, player, opponent):
     
   return game.players[player].activePokemon.moves['glisteningDroplets']['do'](game, player, opponent, howToPutDamageCounters)
 
-def retreatChoose(game, player):
+def retreatChoose(game, player, energyAttached):
   print('Pick an energy card to discard.\n')
       
   count = 0
   energy = []
 
-  if game.players[player].activePokemon.attachedEnergy[EnergyType.FusionStrikeEnergy] > 0:
-    for i in range(game.players[player].activePokemon.attachedEnergy[EnergyType.FusionStrikeEnergy]):
+  if energyAttached[EnergyType.FusionStrikeEnergy] > 0:
+    for i in range(energyAttached[EnergyType.FusionStrikeEnergy]):
       print(f'{count}   Fusion Strike Energy')
       energy.append(EnergyType.FusionStrikeEnergy)
       count += 1
 
-  if game.players[player].activePokemon.attachedEnergy[EnergyType.DoubleTurboEnergy] > 0:
-    for i in range(game.players[player].activePokemon.attachedEnergy[EnergyType.DoubleTurboEnergy]):
+  if energyAttached[EnergyType.DoubleTurboEnergy] > 0:
+    for i in range(energyAttached[EnergyType.DoubleTurboEnergy]):
       print(f'{count}   Double Turbo Energy')
       energy.append(EnergyType.DoubleTurboEnergy)
       count += 1
 
-  if game.players[player].activePokemon.attachedEnergy[EnergyType.Water] > 0:
-    for i in range(game.players[player].activePokemon.attachedEnergy[EnergyType.Water]):
+  if energyAttached[EnergyType.Water] > 0:
+    for i in range(energyAttached[EnergyType.Water]):
       print(f'{count}   Water Energy')
       energy.append(EnergyType.Water)
       count += 1
@@ -722,8 +722,14 @@ def retreat(game, player, opponent):
     
     energyToDiscard = []
 
+    energyAttached = game.players[player].activePokemon.attachedEnergy
+
     for i in range(game.players[player].activePokemon.retreatCost):
-      energyToDiscard.append(retreatChoose(game, player))
+      chosenEnergy = retreatChoose(game, player, energyAttached)
+
+      energyToDiscard.append(chosenEnergy)
+
+      energyAttached[chosenEnergy] -= 1
 
     newPokemonIndex = retreatPickABenchedPokemon(game, player)
 
@@ -787,7 +793,7 @@ def choosePokemonToEvolveFrom(game, player, canEvolveFrom, evolutionPokemonHandI
     printPokemon(canEvolveFrom[int(text[1])])
     return choosePokemonToEvolveFrom(game, player, canEvolveFrom, evolutionPokemonHandIndex)
   if text[0] == 'choose' and int(text[1]) < len(canEvolveFrom):
-    game.evolve(player, canEvolveFrom[0]['pokemonLocation'], canEvolveFrom[0]['pokeonIndex'], 
+    game.evolve(player, canEvolveFrom[int(text[1])]['pokemonLocation'], canEvolveFrom[int(text[1])]['pokemonIndex'], 
                   evolutionPokemonHandIndex)
     return game
   else:

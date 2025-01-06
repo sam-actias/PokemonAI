@@ -393,6 +393,431 @@ def glisteningDroplets(game, player, opponent):
     
   return game.players[player].activePokemon.moves['glisteningDroplets']['do'](game, player, opponent, howToPutDamageCounters)
 
+def retreatChoose(energyAttached):
+  count = 0
+  energy = []
+
+  if energyAttached[EnergyType.FusionStrikeEnergy] > 0:
+    for i in range(energyAttached[EnergyType.FusionStrikeEnergy]):
+      print(f'{count}   Fusion Strike Energy')
+      energy.append(EnergyType.FusionStrikeEnergy)
+      count += 1
+
+  if energyAttached[EnergyType.DoubleTurboEnergy] > 0:
+    for i in range(energyAttached[EnergyType.DoubleTurboEnergy]):
+      print(f'{count}   Double Turbo Energy')
+      energy.append(EnergyType.DoubleTurboEnergy)
+      count += 1
+
+  if energyAttached[EnergyType.Water] > 0:
+    for i in range(energyAttached[EnergyType.Water]):
+      print(f'{count}   Water Energy')
+      energy.append(EnergyType.Water)
+      count += 1
+
+  choose = aiChoose(energy)
+
+  print(f'Your opponent chooses to discard {energy[choose]} energy card.')
+
+  return energy[choose]
+
+def retreatPickABenchedPokemon(game, player):
+  print('\nYour opponent must pick a benched Pokemon to replace their active Pokemon.')
+
+  choose = aiChoose(game.players[player].bench)
+
+  print(f'Your opponent chooses {game.players[player].bench[choose].name} to replace their active Pokemon.')
+
+  return choose
+
+def retreat(game, player, opponent):
+  if game.players[player].activePokemon.retreatCost > 0:
+    print(f'\nYour opponent needs to discard {game.players[player].activePokemon.retreatCost} energy card(s) 
+          from {game.players[player].activePokemon.name} in order to retreat.')
+    
+    energyToDiscard = []
+
+    energyAttached = game.players[player].activePokemon.attachedEnergy
+
+    for i in range(game.players[player].activePokemon.retreatCost):
+      chosenEnergy = retreatChoose(energyAttached)
+
+      energyToDiscard.append(chosenEnergy)
+
+      energyAttached[chosenEnergy] -= 1
+
+    newPokemonIndex = retreatPickABenchedPokemon(game, player)
+
+    return game.retreat(player, newPokemonIndex, energyToDiscard)
+
+def playBasicPokemonToBench(game, player, opponent):
+  if len(game.players[player].bench) < 5: 
+    basicPokemon = []
+    basicPokemonIndexes = []
+
+    for index, card in enumerate(game.players[player].hand):
+      if card.cardType == CardType.Pokemon and card.stage == Stage.Basic:
+        basicPokemon.add(card)
+        basicPokemonIndexes.add(index)
+
+    choose = aiChoose(basicPokemon)
+
+    print(f'Your opponent chooses to play {basicPokemon[choose].name} to their bench.')
+
+    game.players[player].bench.append(basicPokemon[choose])
+    game.players[player].hand.pop(basicPokemonIndexes[choose])
+
+    return game
+
+  raise Exception('bench is already full')
+
+def choosePokemonToEvolveFrom(game, player, canEvolveFrom, evolutionPokemonHandIndex, evolvedPokemonName):
+  choose = aiChoose(canEvolveFrom)
+
+  print(f'Your opponent chooses to evolve {canEvolveFrom[choose]["name"]} into {evolvedPokemonName}.')
+
+  game.evolve(player, canEvolveFrom[choose]['pokemonLocation'], canEvolveFrom[choose]['pokemonIndex'], 
+                evolutionPokemonHandIndex)
+  return game
+
+def evolvePokemon(game, player, opponent):
+  evolutionPokemonHand = []
+  evolutionPokemonHandIndexes = []
+
+  for index, card in enumerate(game.players[player].hand):
+    if card.cardType == CardType.Pokemon and not card.stage == Stage.Basic:
+      canPlay = False
+
+      for pokemon in card.evolvesFrom:
+        if game.players[player].activePokemon.name == pokemon.name:
+          canPlay = True
+
+        for benchPokemon in game.players[player].bench:
+          if benchPokemon.name == pokemon.name:
+            canPlay = True
+      
+      if canPlay:
+        evolutionPokemonHand.append(card)
+        evolutionPokemonHandIndexes.append(index)
+  
+  choose = aiChoose(evolutionPokemonHand)
+
+  canEvolveFrom = []
+
+  for pokemon in evolutionPokemonHand[choose].evolvesFrom:
+    if game.players[player].activePokemon.name == pokemon.name:
+      canEvolveFrom.append({ 'name': pokemon.name, 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
+
+    for index, benchPokemon in enumerate(game.players[player].bench):
+      if benchPokemon.name == pokemon.name:
+        canEvolveFrom.append({ 'name': pokemon.name, 'pokemonLocation': 'bench', 'pokemonIndex': index})
+
+  if len(canEvolveFrom) == 1:
+    if canEvolveFrom[0]['pokemonLocation'] == 'activePokemon':
+      print(f'Your opponent evolves {game.players[player].activePokemon.name} into {evolutionPokemonHand[choose].name}.')
+    else:
+      print(f'Your opponent evolves {game.players[player].bench[canEvolveFrom[0]["pokemonIndex"]].name} into {evolutionPokemonHand[choose].name}.')
+
+    game.evolve(player, canEvolveFrom[0]['pokemonLocation'], canEvolveFrom[0]['pokeonIndex'], 
+                evolutionPokemonHandIndexes[choose])
+    
+    return game
+  else:
+    return choosePokemonToEvolveFrom(game, player, canEvolveFrom, evolutionPokemonHandIndexes[choose], 
+                                     evolutionPokemonHand[choose].name)
+
+def determineItemEffectParams(game, player, opponent, item):
+  if item.name == 'Battle VIP Pass':
+    basicPokemon = []
+    basicPokemonIndexes = []
+
+    for index, card in enumerate(game.players[player].deck):
+      if card.cardType == CardType.Pokemon and card.stage == Stage.Basic:
+        basicPokemon.append(card)
+        basicPokemonIndexes.append(index)
+
+    if len(basicPokemon) == 0:
+      print('There are no Basic Pokemon in your opponent\'s deck. Battle VIP Pass ends.')
+
+      return { 'pokemon1Index': None, 'pokemon2Index': None }
+
+    print('\nYour opponent picks a Basic Pokemon from their deck.')
+
+    for index, pokemon in enumerate(basicPokemon):
+      print(f'{index}  {pokemon.name}')
+
+    print('\nCommands:')
+    print('details {x}: get details about Pokemon')
+    print('choose {x}: choose Pokemon')
+
+    text = input()
+
+    text = text.split()
+
+    if text[0] == 'details' and int(text[1]) < len(basicPokemon):
+      printPokemon(basicPokemon[int(text[1])])
+      return determineItemEffectParams(game, player, opponent, item)
+    elif text[0] == 'choose' and int(text[1]) < len(basicPokemon):
+      pokemon1Index = basicPokemonIndexes[int(text[1])]
+
+      if len(game.players[player].bench) == 5 or len(basicPokemon) == 1:
+        return game
+
+      pokemon2Index = battleVipPassSecondPokemon(game, player)
+
+      return { 'pokemon1Index': pokemon1Index, 'pokemon2Index': pokemon2Index }
+    else:
+      print('what?')
+      return determineItemEffectParams(game, player, opponent, item)
+    
+  elif item.name == 'Cram-O-Matic':
+    print('\nPick an item to discard from your hand.')
+
+    itemCards = []
+    itemCardIndexes = []
+
+    for index, card in enumerate(game.players[player].hand):
+      if card.cardType == CardType.Item:
+        itemCards.append(card)
+        itemCardIndexes.append(index)
+
+    for index, card in enumerate(itemCards):
+      print(f'{index}   {card.name}')
+
+    print('\nCommands:')
+    print('details {x}: get details about item')
+    print('choose {x}: choose item')
+
+    text = input()
+
+    text = text.split()
+
+    if text[0] == 'details' and int(text[1]) < len(itemCards):
+      printNonPokemonCard(itemCards[int(text[1])])
+      return determineItemEffectParams(game, player, opponent, item)
+    elif text[0] == 'choose' and int(text[1]) < len(itemCards):
+      discardItemIndex = itemCardIndexes[int(text[1])]
+
+      coinFlip = random.randint(0, 1)
+
+      if coinFlip == 1:
+        return { 'discardItemIndex': discardItemIndex, 'heads': True, 'deckCardIndex': cramomaticHeads(game, player) }
+      
+      return { 'discardItemIndex': discardItemIndex, 'heads': False } 
+    else:
+      print('what?')
+      return determineItemEffectParams(game, player, opponent, item)
+    
+  elif item.name == 'Power Tablet':
+    return { }
+  
+  elif item.name == 'Ultra Ball':
+    # TODO reveal the card for later ML needs
+
+    print('\nPick first card from your hand to discard.')
+
+    hand = game.players[player].hand
+
+    for index, card in enumerate(hand):
+      print(f'{index}   {card.name}')
+
+    print('\nCommands:')
+    print('details {x}: get details about card')
+    print('choose {x}: choose card')
+
+    text = input()
+
+    text = text.split()
+
+    if text[0] == 'details' and int(text[1]) < len(game.players[player].hand):
+      printNonPokemonCard(game.players[player].hand[int(text[1])])
+      return determineItemEffectParams(game, player, opponent, item)
+    elif text[0] == 'choose' and int(text[1]) < len(game.players[player].hand):
+      discardCard1Index = int(text[1])
+
+      hand.pop(discardCard1Index)
+
+      discardCard2Index, pokemonDeckIndex = ultraBallDiscardSecondCard(game, player, hand)
+
+      return { 'discardCard1Index': discardCard1Index, 'discardCard2Index': discardCard2Index, 'pokemonDeckIndex': pokemonDeckIndex }
+
+    else:
+      print('what?')
+      return determineItemEffectParams(game, player, opponent, item)
+
+  elif item.name == 'Lost Vacuum':
+    print('\nPick a card from your hand to discard.')
+
+    for index, card in enumerate(game.players[player].hand):
+      print(f'{index}   {card.name}')
+
+    print('\nCommands:')
+    print('details {x}: get details about card')
+    print('choose {x}: choose card')
+
+    text = input()
+
+    text = text.split()
+
+    if text[0] == 'details' and int(text[1]) < len(game.players[player].hand):
+      printNonPokemonCard(game.players[player].hand[int(text[1])])
+      return determineItemEffectParams(game, player, opponent, item)
+    elif text[0] == 'choose' and int(text[1]) < len(game.players[player].hand):
+      entryFeeLostZoneCardIndex = int(text[1])
+
+      cardInfo = lostVacuumPickCard(game, player, opponent)
+
+      cardInfo['entryFeeLostZoneCardIndex'] = entryFeeLostZoneCardIndex
+
+      return cardInfo
+    else:
+      print('what?')
+      return determineItemEffectParams(game, player, opponent, item)
+    
+  elif item.name == 'Nest Ball':
+    print('\nPick a Basic Pokemon from your deck to put onto your Bench.')
+
+    basicPokemon = []
+    basicPokemonIndexes = []
+
+    for index, card in enumerate(game.players[player].deck):
+      if card.cardType == CardType.Pokemon and card.stage == Stage.Basic:
+        basicPokemon.append(card)
+        basicPokemonIndexes.append(index)
+
+    if len(basicPokemon) == 0:
+      print('There are no Basic Pokemon in your deck. Nest Ball ends.')
+
+      return { 'pokemonDeckIndex': None }
+
+    for index, pokemon in enumerate(basicPokemon):
+      print(f'{index}   {pokemon.name}')
+
+    print('\nCommands:')
+    print('details {x}: get details about Pokemon')
+    print('choose {x}: choose Pokemon')
+
+    text = input()
+
+    text = text.split()
+
+    if text[0] == 'details' and int(text[1]) < len(basicPokemon):
+      printPokemon(basicPokemon[int(text[1])])
+      return determineItemEffectParams(game, player, opponent, item)
+    elif text[0] == 'choose' and int(text[1]) < len(basicPokemon):
+      return { 'pokemonDeckIndex': basicPokemonIndexes[int(text[1])] }
+    else:
+      print('what?')
+      return determineItemEffectParams(game, player, opponent, item)
+
+  elif item.name == 'Switch Cart':
+    print('\nPick a Pokemon from your Bench to switch with your Active Pokemon.')
+
+    for index, pokemon in enumerate(game.players[player].bench):
+      print(f'{index}   {pokemon.name}')
+
+    print('\nCommands:')
+    print('details {x}: get details about Pokemon')
+    print('choose {x}: choose Pokemon')
+
+    text = input()
+
+    text = text.split()
+
+    if text[0] == 'details' and int(text[1]) < len(game.players[player].bench):
+      printPokemon(game.players[player].bench[int(text[1])])
+      return determineItemEffectParams(game, player, opponent, item)
+    elif text[0] == 'choose' and int(text[1]) < len(game.players[player].bench):
+      return { 'benchPokemonIndex': int(text[1]) }
+    else:
+      print('what?')
+      return determineItemEffectParams(game, player, opponent, item)
+
+  elif item.name == 'Escape Rope':
+    opponentChosenIndex = None
+
+    if len(game.players[opponent].bench) == 0:
+      print('\nYour opponent has no benched Pokemon. Their Active Pokemon will stay in the Active Pokemon spot.')
+    else:
+      opponentChosenIndex = naiveAiChoose(game.players[opponent].bench)
+
+      print(f'\nYour opponent has chosen to put out {game.players[opponent].bench[opponentChosenIndex].name}.')
+
+    if len(game.players[player].bench) == 0:
+      print('\nYou have no benched Pokemon. Your Active Pokemon will stay in the Active Pokemon spot. Escape Rope ends.')
+
+      return { 'opponentBenchIndex': opponentChosenIndex }
+    else:
+      playerPokemonIndex = escapeRopePlayerChoose(game, player, opponent, opponentChosenIndex)
+
+      return { 'playerBenchIndex': playerPokemonIndex, 'opponentBenchIndex': opponentChosenIndex }
+        
+  elif item.name == 'Pal Pad':
+    print('\nPick first Supporter card from your discard pile to shuffle into your deck.')
+
+    supporterCards = []
+    supporterCardIndexes = []
+
+    for index, card in enumerate(game.players[player].discardPile):
+      if card.cardType == CardType.Supporter:
+        supporterCards.append(card)
+        supporterCardIndexes.append(index)
+
+    for index, card in enumerate(supporterCards):
+      print(f'{index}   {card.name}')
+
+    print('\nCommands:')
+    print('details {x}: get details about card')
+    print('choose {x}: choose card')
+
+    text = input()
+
+    text = text.split()
+
+    if text[0] == 'details' and int(text[1]) < len(supporterCards):
+      printNonPokemonCard(supporterCards[int(text[1])])
+      return determineItemEffectParams(game, player, opponent, item)
+    elif text[0] == 'choose' and int(text[1]) < len(supporterCards):
+      firstChosenIndex = supporterCardIndexes[int(text[1])]
+
+      supporterCards.pop(int(text[1]))
+      supporterCardIndexes.pop(int(text[1]))
+
+      if len(supporterCards) == 0:
+        print('There are no more Supporter cards in your discard pile. Pal Pad ends.')
+
+        return { 'firstChosenIndex': firstChosenIndex }
+      else:
+        secondChosenIndex = palPadSecondSupporter(game, player, supporterCards)
+
+        if secondChosenIndex == None:
+          return { 'firstChosenIndex': firstChosenIndex }
+
+        return { 'firstChosenIndex': firstChosenIndex, 'secondChosenIndex': supporterCardIndexes[secondChosenIndex] }
+    else:
+      print('what?')
+      return determineItemEffectParams(game, player, opponent, item)
+    
+  else:
+    raise Exception('item not found')
+
+def playItem(game, player, opponent):
+  itemCards = []
+  itemCardIndexes = []
+
+  for index, card in enumerate(game.players[player].hand):
+    if card.cardType == CardType.Item and card.canplay(game, player, opponent):
+      itemCards.append(card)
+      itemCardIndexes.append(index)
+    
+  choose = aiChoose(itemCards)
+
+  print(f'Your opponent plays Item {itemCards[choose].name}.')
+
+  game.playItem(player, itemCardIndexes[choose], determineItemEffectParams(game, player, opponent, itemCards[choose]))
+
+  return game
+
 humanAttackTurnOptions = {
   'crossFusionStrike': crossFusionStrike,
   'maxMiracle': maxMiracle,
