@@ -157,44 +157,44 @@ def crossFusionStrikeMoveChoices(game, player, opponent, benchedFusionStrikeMove
     if choose2 == 0:
       howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
 
-      print(f'\nYour opponent chooses {game.players[opponent].activePokemon.name} to put the first damage counter (10 HP) on.')
+      print(f'\nYour opponent chooses {game.players[opponent].activePokemon.name} to put the second damage counter (10 HP) on.')
     else:
       howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': choose2 - 1 })
 
-      print(f'\nYour opponent chooses {game.players[opponent].bench[choose1 - 1].name} to put the first damage counter (10 HP) on.')
+      print(f'\nYour opponent chooses {game.players[opponent].bench[choose1 - 1].name} to put the second damage counter (10 HP) on.')
 
     choose3 = aiChoose(game.players[opponent].bench)
 
     if choose3 == 0:
       howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
 
-      print(f'\nYour opponent chooses {game.players[opponent].activePokemon.name} to put the first damage counter (10 HP) on.')
+      print(f'\nYour opponent chooses {game.players[opponent].activePokemon.name} to put the third damage counter (10 HP) on.')
     else:
       howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': choose3- 1 })
 
-      print(f'\nYour opponent chooses {game.players[opponent].bench[choose1 - 1].name} to put the first damage counter (10 HP) on.')
+      print(f'\nYour opponent chooses {game.players[opponent].bench[choose1 - 1].name} to put the third damage counter (10 HP) on.')
 
     choose4 = aiChoose(game.players[opponent].bench)
 
     if choose4 == 0:
       howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
 
-      print(f'\nYour opponent chooses {game.players[opponent].activePokemon.name} to put the first damage counter (10 HP) on.')
+      print(f'\nYour opponent chooses {game.players[opponent].activePokemon.name} to put the fourth damage counter (10 HP) on.')
     else:
       howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': choose4 - 1 })
 
-      print(f'\nYour opponent chooses {game.players[opponent].bench[choose1 - 1].name} to put the first damage counter (10 HP) on.')
+      print(f'\nYour opponent chooses {game.players[opponent].bench[choose1 - 1].name} to put the fourth damage counter (10 HP) on.')
 
     choose5 = aiChoose(game.players[opponent].bench)
 
     if choose5 == 0:
       howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
 
-      print(f'\nYour opponent chooses {game.players[opponent].activePokemon.name} to put the first damage counter (10 HP) on.')
+      print(f'\nYour opponent chooses {game.players[opponent].activePokemon.name} to put the fifth damage counter (10 HP) on.')
     else:
       howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': choose5 - 1 })
 
-      print(f'\nYour opponent chooses {game.players[opponent].bench[choose1 - 1].name} to put the first damage counter (10 HP) on.')
+      print(f'\nYour opponent chooses {game.players[opponent].bench[choose1 - 1].name} to put the fifth damage counter (10 HP) on.')
       
     return game.players[player].activePokemon.moves['crossFusionStrike']['do'](game, player, 
                 benchedFusionStrikeIndexes[moveIndex], benchedFusionStrikeMoves[moveIndex].name, { 'game': game,
@@ -319,6 +319,79 @@ def melodiousEcho(game, player, opponent):
   print('Your opponent uses Active Pokemon Meloetta\'s Melodious Echo attack.')
 
   return game.players[player].activePokemon.moves['melodiousEcho']['do'](game, player, opponent)
+
+def glisteningDroplets(game, player, opponent):
+  if len(game.players[opponent].bench) == 0:
+      return game.players[player].activePokemon.moves['glisteningDroplets']['do'](game, player, opponent, 
+                  [{ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None}, { 'pokemonLocation': 'activePokemon', 'pokemonIndex': None}, 
+                   { 'pokemonLocation': 'activePokemon', 'pokemonIndex': None}, { 'pokemonLocation': 'activePokemon', 'pokemonIndex': None}, 
+                   { 'pokemonLocation': 'activePokemon', 'pokemonIndex': None}])
+    
+  howToPutDamageCounters = []
+
+  print('\nYour opponent chooses how to distribute 5 damage counters (10 HP each)')
+
+  pokemonList = [game.players[opponent].activePokemon]
+
+  for pokemon in game.players[opponent].bench:
+    pokemonList.append(pokemon)
+
+  choose1 = aiChoose(pokemonList)
+
+  if choose1 == 0:
+    howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
+
+    print(f'\nYour opponent chooses {game.players[opponent].activePokemon.name} to put the first damage counter (10 HP) on.')
+  else:
+    howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': choose1 - 1 })
+
+    print(f'\nYour opponent chooses {game.players[opponent].bench[choose1 - 1]} to put the first damage counter (10 HP) on.')
+  
+  choose2 = aiChoose(game.players[opponent].bench)
+
+  if choose2 == 0:
+    howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
+
+    print(f'\nYour opponent chooses {game.players[opponent].activePokemon.name} to put the second damage counter (10 HP) on.')
+  else:
+    howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': choose2 - 1 })
+
+    print(f'\nYour opponent chooses {game.players[opponent].bench[choose1 - 1].name} to put the second damage counter (10 HP) on.')
+
+  choose3 = aiChoose(game.players[opponent].bench)
+
+  if choose3 == 0:
+    howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
+
+    print(f'\nYour opponent chooses {game.players[opponent].activePokemon.name} to put the third damage counter (10 HP) on.')
+  else:
+    howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': choose3- 1 })
+
+    print(f'\nYour opponent chooses {game.players[opponent].bench[choose1 - 1].name} to put the third damage counter (10 HP) on.')
+
+  choose4 = aiChoose(game.players[opponent].bench)
+
+  if choose4 == 0:
+    howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
+
+    print(f'\nYour opponent chooses {game.players[opponent].activePokemon.name} to put the fourth damage counter (10 HP) on.')
+  else:
+    howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': choose4 - 1 })
+
+    print(f'\nYour opponent chooses {game.players[opponent].bench[choose1 - 1].name} to put the fourth damage counter (10 HP) on.')
+
+  choose5 = aiChoose(game.players[opponent].bench)
+
+  if choose5 == 0:
+    howToPutDamageCounters.append({ 'pokemonLocation': 'activePokemon', 'pokemonIndex': None })
+
+    print(f'\nYour opponent chooses {game.players[opponent].activePokemon.name} to put the fifth damage counter (10 HP) on.')
+  else:
+    howToPutDamageCounters.append({ 'pokemonLocation': 'bench', 'pokemonIndex': choose5 - 1 })
+
+    print(f'\nYour opponent chooses {game.players[opponent].bench[choose1 - 1].name} to put the fifth damage counter (10 HP) on.')
+    
+  return game.players[player].activePokemon.moves['glisteningDroplets']['do'](game, player, opponent, howToPutDamageCounters)
 
 humanAttackTurnOptions = {
   'crossFusionStrike': crossFusionStrike,
