@@ -1102,7 +1102,7 @@ def useToolEffect(game, player, opponent):
 
   return game
 
-humanAttackTurnOptions = {
+aiAttackTurnOptions = {
   'crossFusionStrike': crossFusionStrike,
   'maxMiracle': maxMiracle,
   'energyMix': energyMix,

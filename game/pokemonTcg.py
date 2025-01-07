@@ -1,14 +1,16 @@
 from game import Game
 from enums import Stage, EnergyType, CardType
 from naiveAI import naiveAiChoose
+from humanAttackTurnOptions import humanAttackTurnOptions
+from aiAttackTurnOptions import aiAttackTurnOptions
 
 def printNonPokemonCard(card):
+  # combine with print pokemon
   print(f'\nName: {card.name}')
   print(f'Card Type: {card.cardType}')
   print(f'Text: {card.text}')
 
 def printGameBoard(game):
-  # combine with printNonPokemonCard
   print('\nSYLVIA')
   print(f'Prizes: {len(game.players['SYLVIA'].prizes)}')
   print(f'Can Use VSTAR Power: {game.players['SYLVIA'].canUseVstarPower}')
@@ -19,7 +21,7 @@ def printGameBoard(game):
     print(f'{index + 1}   {pokemon.name}')
   print('ACTIVE POKEMON')
   print(f'0   {game.players['SYLVIA'].activePokemon.name}')
-  print(f'\n{game.player1Name}')
+  print(f'\nYOU')
   print('ACTIVE POKEMON')
   print(f'{len(game.players['SYLVIA'].bench) + 1}   {game.players[game.player1Name].activePokemon.name}')
   print('BENCH POKEMON')
@@ -36,12 +38,112 @@ def printGameBoard(game):
     print(f'{game.players[game.player1Name].bench + len(game.players['SYLVIA'].bench) + 1}   {game.players[game.player1Name].stadium.name}')
   else:
     print('none')
+  print('\nYOUR HAND')
+  for index, card in enumerate(game.players[game.player1Name].hand):
+    print(f'{game.players[game.player1Name].bench + len(game.players['SYLVIA'].bench) + index + 2}   {card.name}')
 
-# def doTurn(game):
-#   if (game.goesFirst == 'SYLVIA' and game.players['SYLVIA'].activeTurn == 
-#       game.players[game.player1Name].activeTurn) or (game.goesFirst == game.player1Name and 
-#       game.players['SYLVIA'].activeTurn < game.players[game.player1Name].activeTurn):
-    
+def doTurnOptionsAi(game, player, opponent):
+  turnOptions = determineTurnOptions(game, player, game.player1Name)
+
+  turnOptions.append('endTurn')
+
+  choose = naiveAiChoose(turnOptions)
+
+  if not choose == 'endTurn':
+    aiAttackTurnOptions[choose](game, player, opponent)
+
+  if (choose == 'retreat' or choose == 'playBasicPokemonToBench' or choose == 'evolvePokemon' 
+    or choose == 'playItem' or choose == 'playStadium' or choose == 'playTool' 
+    or choose == 'playSupporter' or choose == 'attachEnergy' or choose == 'useStadiumEffect' 
+    or choose == 'useToolEffect'):
+    doTurnOptionsAi(game, player, opponent)
+
+def gameBoardDetailOptions(game):
+  gameBoardDetailOptions = []
+
+  for pokemon in game.players['SYLVIA'].bench:
+    gameBoardDetailOptions.append(pokemon)
+
+  gameBoardDetailOptions.append(game.players['SYLVIA'].activePokemon)
+
+  gameBoardDetailOptions.append(game.players[game.player1Name].activePokemon)
+
+  for pokemon in game.players[game.player1Name].bench:
+    gameBoardDetailOptions.append(pokemon)
+
+  if game.players['SYLVIA'].stadium:
+    gameBoardDetailOptions.append(game.players['SYLVIA'].stadium)
+  elif game.players[game.player1Name].stadium:
+    gameBoardDetailOptions.append(game.players[game.player1Name].stadium)
+
+  for card in game.players[game.player1Name].hand:
+    gameBoardDetailOptions.append(card)
+
+def doTurnOptionsHuman(game, player, opponent):
+  turnOptions = determineTurnOptions(game, player, game.player1Name)
+
+  turnOptions.append('endTurn')
+
+  print('\nPick a turn action. An attack ends the turn.')
+
+  for index, option in enumerate(turnOptions):
+    print(f'{index}   {option}')
+
+  print('\nCommands:')
+  print('details {x}: card details')
+  print('pick {x}: pick a turn action\n')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'details':
+    gameBoardDetailOptions = gameBoardDetailOptions()
+
+    if gameBoardDetailOptions[int(text[1])].cardType == CardType.Pokemon:
+      printPokemon(gameBoardDetailOptions[int(text[1])])
+    else:
+      printNonPokemonCard(gameBoardDetailOptions[int(text[1])])
+  elif text[0] == 'pick':
+    choose = turnOptions[int(text[1])]
+
+    if not choose == 'endTurn':
+      humanAttackTurnOptions[choose](game, player, opponent)
+
+    if (choose == 'retreat' or choose == 'playBasicPokemonToBench' or choose == 'evolvePokemon' 
+      or choose == 'playItem' or choose == 'playStadium' or choose == 'playTool' 
+      or choose == 'playSupporter' or choose == 'attachEnergy' or choose == 'useStadiumEffect' 
+      or choose == 'useToolEffect'):
+      doTurnOptionsHuman(game, player, opponent)
+
+  if not choose == 'endTurn':
+    humanAttackTurnOptions[choose](game, player, opponent)
+
+  if (choose == 'retreat' or choose == 'playBasicPokemonToBench' or choose == 'evolvePokemon' 
+    or choose == 'playItem' or choose == 'playStadium' or choose == 'playTool' 
+    or choose == 'playSupporter' or choose == 'attachEnergy' or choose == 'useStadiumEffect' 
+    or choose == 'useToolEffect'):
+    doTurnOptionsHuman(game, player, opponent)
+
+def doTurn(game):
+  if (game.goesFirst == 'SYLVIA' and game.players['SYLVIA'].activeTurn == 
+      game.players[game.player1Name].activeTurn) or (game.goesFirst == game.player1Name and 
+      game.players['SYLVIA'].activeTurn < game.players[game.player1Name].activeTurn):
+    print(f'\n{game.player2Name}\'s turn!')
+
+    game.startTurn(game.player2Name)
+
+    doTurnOptionsAi(game, game.player2Name, game.player1Name)
+
+    game.endTurn(game.player2Name)
+  else:
+    print(f'\n{game.player1Name}\'s turn!')
+
+    game.startTurn(game.player1Name)
+
+    doTurnOptionsHuman(game, game.player1Name, game.player2Name)
+
+    game.endTurn(game.player1Name)
 
 def determineTurnOptions(game, player, opponent):
   turnOptions = []

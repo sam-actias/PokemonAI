@@ -512,9 +512,12 @@ class Game:
     if self.players[player].activeTurn == 1 and player == self.goesFirst:
       self.players[player].canUseSupporterFlag = False
 
+    print(f'{player} draws a card.')
+
     self.players[player].hand.append(self.players[player].deck.pop())
 
   def endTurn(self, player, opponent):
+    # add print to narrate
     if self.players[player].activePokemon.poisoned:
       self.players[player].activePokemon += 10
 
