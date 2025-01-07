@@ -1,7 +1,14 @@
 from naiveAI import naiveAiChoose
 from enums import CardType, EnergyType, Stage
+from pokemonTcg import printPokemon
+import random
 
 aiChoose = naiveAiChoose
+
+# player means the player who is using the move
+# opponent menas the other player, even if it's the user
+# I know it's confusing
+# TODO fix??
 
 def crossFusionStrikePsychicLeapShuffleIn(game, player, opponent, benchedFusionStrikeMoves, benchedFusionStrikeIndexes, moveIndex):
   if len(game.players[player].bench) == 1:
@@ -526,6 +533,155 @@ def evolvePokemon(game, player, opponent):
     return choosePokemonToEvolveFrom(game, player, canEvolveFrom, evolutionPokemonHandIndexes[choose], 
                                      evolutionPokemonHand[choose].name)
 
+def battleVipPassSecondPokemon(game, player, firstPokemonIndex):
+  chooseYesNo = aiChoose(['no', 'yes'])
+
+  if not chooseYesNo:
+    print('Your opponent chooses not to pick a second Basic Pokemon from their deck.')
+
+    return None
+  
+  basicPokemon = []
+  basicPokemonIndexes = []
+
+  for index, card in enumerate(game.players[player].deck):
+    if card.cardType == CardType.Pokemon and card.stage == Stage.Basic:
+      basicPokemon.append(card)
+      basicPokemonIndexes.append(index)
+
+  basicPokemon.pop(firstPokemonIndex)
+  basicPokemonIndexes.pop(firstPokemonIndex)
+
+  choose = aiChoose(basicPokemon)
+
+  print(f'Your opponent chooses {basicPokemon[choose].name} from their deck to put on their bench.')
+
+  return basicPokemonIndexes[choose]
+
+def cramomaticHeads(game, player):
+  print('\nYour opponent\'s coin flip landed on heads.')
+
+  print('\nYour opponent picks a card from their deck to put into their hand.')
+
+  choose = aiChoose(game.players[player].deck)
+
+  return choose
+
+def ultraBallPickPokemon(game, player):
+  print('\nYour opponent picks a Pokemon from their deck to put into their hand.')
+
+  pokemon = []
+  pokemonIndexes = []
+
+  for index, card in enumerate(game.players[player].deck):
+    if card.cardType == CardType.Pokemon:
+      pokemon.append(card)
+      pokemonIndexes.append(index)
+
+  if len(pokemon) == 0:
+    print('There are no Pokemon in your opponent\'s deck. Ultra Ball ends.')
+
+    return None
+
+  choose = aiChoose(pokemon)
+
+  print(f'Your opponent chooses {pokemon[choose].name} from their deck to put into their hand.')
+
+  return pokemonIndexes[choose]
+
+
+def ultraBallDiscardSecondCard(game, player, hand):
+  print('\nYour opponent picks a second card from their hand to discard.')
+
+  choose = aiChoose(hand)
+
+  discardCard2Index = choose
+
+  return discardCard2Index, ultraBallPickPokemon(game, player)
+
+def lostVacuumPickCard(game, player, opponent):
+  print('\nYour opponent picks a Tool or Stadium in play to put into the Lost Zone.')
+
+  count = 0
+  cardInfo = []
+
+  if game.players[player].stadium != None:
+    cardInfo.append({ 'lostZoneCardOwner': player, 'lostZoneCardStadium': True})
+  elif game.players[opponent].stadium != None:
+    cardInfo.append({ 'lostZoneCardOwner': opponent, 'lostZoneCardStadium': True})
+
+  if game.players[opponent].activePokemon.tool != None:
+    cardInfo.append({ 'lostZoneCardOwner': opponent, 'lostZoneCardStadium': False, 'lostZoneCardLocation': 'activePokemon' })
+
+  for index, pokemon in enumerate(game.players[opponent].bench):
+    if pokemon.tool != None:
+      cardInfo.append({ 'lostZoneCardOwner': opponent, 'lostZoneCardStadium': False, 
+                       'lostZoneCardLocation': 'bench', 'lostZoneCardIndex': index })
+
+  if game.players[player].activePokemon.tool != None:
+    cardInfo.append({ 'lostZoneCardOwner': player, 'lostZoneCardStadium': False, 'lostZoneCardLocation': 'activePokemon' })
+
+  for index, pokemon in enumerate(game.players[player].bench):
+    if pokemon.tool != None:
+      cardInfo.append({ 'lostZoneCardOwner': player, 'lostZoneCardStadium': False, 
+                       'lostZoneCardLocation': 'bench', 'lostZoneCardIndex': index })
+      
+  choose = aiChoose(cardInfo)
+
+  if cardInfo[choose]['lostZoneCardStadium']:
+    print(f'Your opponent chooses to put the Stadium card in play {game.players[cardInfo[choose]['lostZoneCardOwner']].stadium.name} into the Lost Zone.')
+  else:
+    if cardInfo[choose]['lostZoneCardLocation'] == 'activePokemon':
+      print(f'Your opponent chooses to put the Tool card attached to {game.players[cardInfo[choose]['lostZoneCardOwner']].activePokemon.name} into the Lost Zone.')
+    else:
+      print(f'Your opponent chooses to put the Tool card attached to {game.players[cardInfo[choose]['lostZoneCardOwner']].bench[cardInfo[choose]['lostZoneCardIndex']].name} into the Lost Zone.')
+
+  return cardInfo[choose]
+
+def escapeRopePlayerChoose(game, player, opponent, opponentChosenIndex):
+  print('\nPick a Pokemon from your Bench to switch with your Active Pokemon.')
+
+  for index, pokemon in enumerate(game.players[player].bench):
+    print(f'{index}   {pokemon.name}')
+
+  print('\nCommands:')
+  if opponentChosenIndex != None:
+    print('check: get details about opponent\'s chosen Pokemon')
+  print('details {x}: get details about Pokemon')
+  print('choose {x}: choose Pokemon')
+
+  text = input()
+
+  text = text.split()
+
+  if text[0] == 'details' and int(text[1]) < len(game.players[player].bench):
+    printPokemon(game.players[player].bench[int(text[1])])
+    return escapeRopePlayerChoose(game, player, opponent, opponentChosenIndex)
+  elif text[0] == 'choose' and int(text[1]) < len(game.players[player].bench):
+    return int(text[1])
+  elif text[0] == 'check' and opponentChosenIndex != None:
+    printPokemon(game.players[opponent].bench[opponentChosenIndex])
+    return escapeRopePlayerChoose(game, player, opponent, opponentChosenIndex)
+  else:
+    print('what?')
+    return escapeRopePlayerChoose(game, player, opponent, opponentChosenIndex)
+
+def palPadSecondSupporter(game, player, supporterCards):
+  chooseYesNo = aiChoose(['no', 'yes'])
+
+  if not chooseYesNo:
+    print('Your opponent chooses not to put a second Supporter card into their hand.')
+
+    return None
+
+  print('\nYour opponent picks a second Supporter card from their discard pile to put into their hand.')
+
+  choose = aiChoose(supporterCards)
+
+  print(f'Your opponent chooses {supporterCards[choose].name} to put into their hand.')
+
+  return choose
+
 def determineItemEffectParams(game, player, opponent, item):
   if item.name == 'Battle VIP Pass':
     basicPokemon = []
@@ -543,35 +699,21 @@ def determineItemEffectParams(game, player, opponent, item):
 
     print('\nYour opponent picks a Basic Pokemon from their deck.')
 
-    for index, pokemon in enumerate(basicPokemon):
-      print(f'{index}  {pokemon.name}')
+    choose = aiChoose(basicPokemon)
 
-    print('\nCommands:')
-    print('details {x}: get details about Pokemon')
-    print('choose {x}: choose Pokemon')
+    print(f'Your opponent chooses {basicPokemon[choose].name} from their deck to put on their bench.')
 
-    text = input()
+    pokemon1Index = basicPokemonIndexes[choose]
 
-    text = text.split()
+    if len(game.players[player].bench) == 5 or len(basicPokemon) == 1:
+      return game
 
-    if text[0] == 'details' and int(text[1]) < len(basicPokemon):
-      printPokemon(basicPokemon[int(text[1])])
-      return determineItemEffectParams(game, player, opponent, item)
-    elif text[0] == 'choose' and int(text[1]) < len(basicPokemon):
-      pokemon1Index = basicPokemonIndexes[int(text[1])]
+    pokemon2Index = battleVipPassSecondPokemon(game, player, choose)
 
-      if len(game.players[player].bench) == 5 or len(basicPokemon) == 1:
-        return game
+    return { 'pokemon1Index': pokemon1Index, 'pokemon2Index': pokemon2Index }
 
-      pokemon2Index = battleVipPassSecondPokemon(game, player)
-
-      return { 'pokemon1Index': pokemon1Index, 'pokemon2Index': pokemon2Index }
-    else:
-      print('what?')
-      return determineItemEffectParams(game, player, opponent, item)
-    
   elif item.name == 'Cram-O-Matic':
-    print('\nPick an item to discard from your hand.')
+    print('\nYour opponent picks an item to discard from their hand.')
 
     itemCards = []
     itemCardIndexes = []
@@ -581,32 +723,18 @@ def determineItemEffectParams(game, player, opponent, item):
         itemCards.append(card)
         itemCardIndexes.append(index)
 
-    for index, card in enumerate(itemCards):
-      print(f'{index}   {card.name}')
+    choose = aiChoose(itemCards)
 
-    print('\nCommands:')
-    print('details {x}: get details about item')
-    print('choose {x}: choose item')
+    print(f'Your opponent chooses to discard {itemCards[choose].name} from their hand.')
 
-    text = input()
+    discardItemIndex = itemCardIndexes[choose]
 
-    text = text.split()
+    coinFlip = random.randint(0, 1)
 
-    if text[0] == 'details' and int(text[1]) < len(itemCards):
-      printNonPokemonCard(itemCards[int(text[1])])
-      return determineItemEffectParams(game, player, opponent, item)
-    elif text[0] == 'choose' and int(text[1]) < len(itemCards):
-      discardItemIndex = itemCardIndexes[int(text[1])]
-
-      coinFlip = random.randint(0, 1)
-
-      if coinFlip == 1:
-        return { 'discardItemIndex': discardItemIndex, 'heads': True, 'deckCardIndex': cramomaticHeads(game, player) }
-      
-      return { 'discardItemIndex': discardItemIndex, 'heads': False } 
-    else:
-      print('what?')
-      return determineItemEffectParams(game, player, opponent, item)
+    if coinFlip:
+      return { 'discardItemIndex': discardItemIndex, 'heads': True, 'deckCardIndex': cramomaticHeads(game, player) }
+    
+    return { 'discardItemIndex': discardItemIndex, 'heads': False } 
     
   elif item.name == 'Power Tablet':
     return { }
@@ -614,68 +742,37 @@ def determineItemEffectParams(game, player, opponent, item):
   elif item.name == 'Ultra Ball':
     # TODO reveal the card for later ML needs
 
-    print('\nPick first card from your hand to discard.')
+    print('\nYour opponent picks the first card from their hand to discard.')
 
     hand = game.players[player].hand
 
-    for index, card in enumerate(hand):
-      print(f'{index}   {card.name}')
+    choose = aiChoose(hand)
 
-    print('\nCommands:')
-    print('details {x}: get details about card')
-    print('choose {x}: choose card')
+    discardCard1Index = choose
 
-    text = input()
+    hand.pop(discardCard1Index)
 
-    text = text.split()
+    discardCard2Index, pokemonDeckIndex = ultraBallDiscardSecondCard(game, player, hand)
 
-    if text[0] == 'details' and int(text[1]) < len(game.players[player].hand):
-      printNonPokemonCard(game.players[player].hand[int(text[1])])
-      return determineItemEffectParams(game, player, opponent, item)
-    elif text[0] == 'choose' and int(text[1]) < len(game.players[player].hand):
-      discardCard1Index = int(text[1])
-
-      hand.pop(discardCard1Index)
-
-      discardCard2Index, pokemonDeckIndex = ultraBallDiscardSecondCard(game, player, hand)
-
-      return { 'discardCard1Index': discardCard1Index, 'discardCard2Index': discardCard2Index, 'pokemonDeckIndex': pokemonDeckIndex }
-
-    else:
-      print('what?')
-      return determineItemEffectParams(game, player, opponent, item)
+    return { 'discardCard1Index': discardCard1Index, 'discardCard2Index': discardCard2Index, 'pokemonDeckIndex': pokemonDeckIndex }
 
   elif item.name == 'Lost Vacuum':
-    print('\nPick a card from your hand to discard.')
+    print('\nYour opponent picks a card from their hand to put into the Lost zone.')
 
-    for index, card in enumerate(game.players[player].hand):
-      print(f'{index}   {card.name}')
+    choose = aiChoose(game.players[player].hand)
 
-    print('\nCommands:')
-    print('details {x}: get details about card')
-    print('choose {x}: choose card')
+    print(f'Your opponent chooses to put {game.players[player].hand[choose].name} from their hand into the Lost Zone.')
 
-    text = input()
+    entryFeeLostZoneCardIndex = choose
 
-    text = text.split()
+    cardInfo = lostVacuumPickCard(game, player, opponent)
 
-    if text[0] == 'details' and int(text[1]) < len(game.players[player].hand):
-      printNonPokemonCard(game.players[player].hand[int(text[1])])
-      return determineItemEffectParams(game, player, opponent, item)
-    elif text[0] == 'choose' and int(text[1]) < len(game.players[player].hand):
-      entryFeeLostZoneCardIndex = int(text[1])
+    cardInfo['entryFeeLostZoneCardIndex'] = entryFeeLostZoneCardIndex
 
-      cardInfo = lostVacuumPickCard(game, player, opponent)
+    return cardInfo
 
-      cardInfo['entryFeeLostZoneCardIndex'] = entryFeeLostZoneCardIndex
-
-      return cardInfo
-    else:
-      print('what?')
-      return determineItemEffectParams(game, player, opponent, item)
-    
   elif item.name == 'Nest Ball':
-    print('\nPick a Basic Pokemon from your deck to put onto your Bench.')
+    print('\nYour opponent picks a Basic Pokemon from their deck to put onto their Bench.')
 
     basicPokemon = []
     basicPokemonIndexes = []
@@ -686,74 +783,48 @@ def determineItemEffectParams(game, player, opponent, item):
         basicPokemonIndexes.append(index)
 
     if len(basicPokemon) == 0:
-      print('There are no Basic Pokemon in your deck. Nest Ball ends.')
+      print('There are no Basic Pokemon in your oppoent\'s deck. Nest Ball ends.')
 
       return { 'pokemonDeckIndex': None }
 
-    for index, pokemon in enumerate(basicPokemon):
-      print(f'{index}   {pokemon.name}')
+    choose = aiChoose(basicPokemon)
 
-    print('\nCommands:')
-    print('details {x}: get details about Pokemon')
-    print('choose {x}: choose Pokemon')
+    print(f'Your opponent chooses {basicPokemon[choose].name} from their deck to put onto their Bench.')
 
-    text = input()
-
-    text = text.split()
-
-    if text[0] == 'details' and int(text[1]) < len(basicPokemon):
-      printPokemon(basicPokemon[int(text[1])])
-      return determineItemEffectParams(game, player, opponent, item)
-    elif text[0] == 'choose' and int(text[1]) < len(basicPokemon):
-      return { 'pokemonDeckIndex': basicPokemonIndexes[int(text[1])] }
-    else:
-      print('what?')
-      return determineItemEffectParams(game, player, opponent, item)
+    return { 'pokemonDeckIndex': basicPokemonIndexes[choose] }
 
   elif item.name == 'Switch Cart':
-    print('\nPick a Pokemon from your Bench to switch with your Active Pokemon.')
+    print('\nYour opponent picks a Pokemon from their Bench to switch with their Active Pokemon.')
 
-    for index, pokemon in enumerate(game.players[player].bench):
-      print(f'{index}   {pokemon.name}')
+    choose = aiChoose(game.players[player].bench)
 
-    print('\nCommands:')
-    print('details {x}: get details about Pokemon')
-    print('choose {x}: choose Pokemon')
+    print(f'Your opponent chooses to switch {game.players[player].bench[choose].name} with their Active Pokemon.')
 
-    text = input()
-
-    text = text.split()
-
-    if text[0] == 'details' and int(text[1]) < len(game.players[player].bench):
-      printPokemon(game.players[player].bench[int(text[1])])
-      return determineItemEffectParams(game, player, opponent, item)
-    elif text[0] == 'choose' and int(text[1]) < len(game.players[player].bench):
-      return { 'benchPokemonIndex': int(text[1]) }
-    else:
-      print('what?')
-      return determineItemEffectParams(game, player, opponent, item)
+    return { 'benchPokemonIndex': choose }
 
   elif item.name == 'Escape Rope':
     opponentChosenIndex = None
 
     if len(game.players[opponent].bench) == 0:
-      print('\nYour opponent has no benched Pokemon. Their Active Pokemon will stay in the Active Pokemon spot.')
+      print('\nYou have no benched Pokemon. Your Active Pokemon will stay in the Active Pokemon spot.')
+
+      playerPokemonIndex = None
+    else:
+      playerPokemonIndex = escapeRopePlayerChoose(game, player, opponent, opponentChosenIndex)
+
+    if len(game.players[player].bench) == 0:
+      print('\nYour opponent has no benched Pokemon. Their Active Pokemon will stay in the Active Pokemon spot. Escape Rope ends.')
+
+      return { 'playerBenchIndex': playerPokemonIndex, 'opponentBenchIndex': None }
     else:
       opponentChosenIndex = naiveAiChoose(game.players[opponent].bench)
 
       print(f'\nYour opponent has chosen to put out {game.players[opponent].bench[opponentChosenIndex].name}.')
 
-    if len(game.players[player].bench) == 0:
-      print('\nYou have no benched Pokemon. Your Active Pokemon will stay in the Active Pokemon spot. Escape Rope ends.')
-
-      return { 'opponentBenchIndex': opponentChosenIndex }
-    else:
-      playerPokemonIndex = escapeRopePlayerChoose(game, player, opponent, opponentChosenIndex)
-
       return { 'playerBenchIndex': playerPokemonIndex, 'opponentBenchIndex': opponentChosenIndex }
         
   elif item.name == 'Pal Pad':
-    print('\nPick first Supporter card from your discard pile to shuffle into your deck.')
+    print('\nYour opponent picks first Supporter card from your discard pile to shuffle into their deck.')
 
     supporterCards = []
     supporterCardIndexes = []
@@ -763,41 +834,27 @@ def determineItemEffectParams(game, player, opponent, item):
         supporterCards.append(card)
         supporterCardIndexes.append(index)
 
-    for index, card in enumerate(supporterCards):
-      print(f'{index}   {card.name}')
+    choose = aiChoose(supporterCards)
 
-    print('\nCommands:')
-    print('details {x}: get details about card')
-    print('choose {x}: choose card')
+    print(f'Your opponent chooses {supporterCards[choose].name} from their discard pile to shuffle into their deck.')
 
-    text = input()
+    firstChosenIndex = supporterCardIndexes[choose]
 
-    text = text.split()
+    supporterCards.pop(choose)
+    supporterCardIndexes.pop(choose)
 
-    if text[0] == 'details' and int(text[1]) < len(supporterCards):
-      printNonPokemonCard(supporterCards[int(text[1])])
-      return determineItemEffectParams(game, player, opponent, item)
-    elif text[0] == 'choose' and int(text[1]) < len(supporterCards):
-      firstChosenIndex = supporterCardIndexes[int(text[1])]
+    if len(supporterCards) == 0:
+      print('There are no more Supporter cards in your opponent\'s discard pile. Pal Pad ends.')
 
-      supporterCards.pop(int(text[1]))
-      supporterCardIndexes.pop(int(text[1]))
-
-      if len(supporterCards) == 0:
-        print('There are no more Supporter cards in your discard pile. Pal Pad ends.')
-
-        return { 'firstChosenIndex': firstChosenIndex }
-      else:
-        secondChosenIndex = palPadSecondSupporter(game, player, supporterCards)
-
-        if secondChosenIndex == None:
-          return { 'firstChosenIndex': firstChosenIndex }
-
-        return { 'firstChosenIndex': firstChosenIndex, 'secondChosenIndex': supporterCardIndexes[secondChosenIndex] }
+      return { 'firstChosenIndex': firstChosenIndex }
     else:
-      print('what?')
-      return determineItemEffectParams(game, player, opponent, item)
-    
+      secondChosenIndex = palPadSecondSupporter(game, player, supporterCards)
+
+      if secondChosenIndex == None:
+        return { 'firstChosenIndex': firstChosenIndex }
+
+      return { 'firstChosenIndex': firstChosenIndex, 'secondChosenIndex': supporterCardIndexes[secondChosenIndex] }
+
   else:
     raise Exception('item not found')
 
@@ -815,6 +872,233 @@ def playItem(game, player, opponent):
   print(f'Your opponent plays Item {itemCards[choose].name}.')
 
   game.playItem(player, itemCardIndexes[choose], determineItemEffectParams(game, player, opponent, itemCards[choose]))
+
+  return game
+
+def playStadium(game, player, opponent):
+  stadiumCards = []
+  stadiumCardIndexes = []
+
+  for index, card in enumerate(game.players[player].hand):
+    if card.cardType == CardType.Stadium:
+      stadiumCards.append(card)
+      stadiumCardIndexes.append(index)
+    
+  choose = aiChoose(stadiumCards)
+
+  print(f'Your opponent plays Stadium {stadiumCards[choose].name}.')
+
+  game.playStadium(player, stadiumCardIndexes[choose])
+
+  return game
+
+def playToolWhichPokemon(game, player):
+  pokemon = []
+
+  pokemon.append(game.players[player].activePokemon)
+
+  for benchPokemon in game.players[player].bench:
+    pokemon.append(benchPokemon)
+
+  choose = aiChoose(pokemon)
+
+  return choose
+
+def playTool(game, player, opponent):
+  toolCards = []
+  toolCardIndexes = []
+
+  for index, card in enumerate(game.players[player].hand):
+    if card.cardType == CardType.Tool:
+      toolCards.append(card)
+      toolCardIndexes.append(index)
+    
+  choose = aiChoose(toolCards)
+
+  pokemonChoice = playToolWhichPokemon(game, player)
+
+  if pokemonChoice == 0:
+    print(f'Your opponent plays Tool {toolCards[choose].name} on their Active Pokemon {game.players[player].activePokemon.name}.')
+
+    game.playTool(player, toolCardIndexes[choose], 'activePokemon')
+  else:
+    print(f'Your opponent plays Tool {toolCards[choose].name} on their benched Pokemon {game.players[player].bench[pokemonChoice - 1].name}.')
+
+    game.playTool(player, toolCardIndexes[choose], 'bench', pokemonChoice - 1)
+
+  return game
+
+def elesasSparkleChooseSecondPokemon(game, player, fusionStrikePokemon, fusionStrikePokemonLocations):
+  chooseYesNo = aiChoose(['no', 'yes'])
+
+  if not chooseYesNo:
+    print('Your opponent chooses not to pick a second Fusion Strike Pokemon to attach a Fusion Strike Energy from their deck to.')
+
+    return None, None
+
+  choose = aiChoose(fusionStrikePokemon)
+
+  if choose == 0:
+    pokemon2Location = 'activePokemon'
+    pokemon2Index = None
+  else:
+    pokemon2Location = 'bench'
+    pokemon2Index = choose - 1
+
+  return pokemon2Location, pokemon2Index
+
+def determineSupporterEffectParams(game, player, opponent, supporter):
+  if supporter.name == 'Boss\'s Orders (Ghetsis)':
+    print('\nYour opponent picks a Pokemon from your Bench to switch with your Active Pokemon.')
+
+    choose = aiChoose(game.players[opponent].bench)
+
+    print(f'Your opponent chooses to switch {game.players[opponent].bench[choose].name} with your Active Pokemon.')
+
+    return { 'opponent': opponent, 'benchPokemonIndex': choose }
+
+  elif supporter.name == 'Elesa\'s Sparkle':
+    print('\nYour opponent chooses a Fusion Strike Pokemon to attach a Fusion Strike Energy card from their deck to (if they have one upon searching.)')
+
+    fusionStrikePokemon = []
+    fusionStrikePokemonLocations = []
+
+    if game.players[player].activePokemon.fusionStrike:
+      fusionStrikePokemon.append(game.players[player].activePokemon)
+      fusionStrikePokemonLocations.append({ 'location': 'activePokemon', 'index': None })
+
+    for index, pokemon in enumerate(game.players[player].bench):
+      if pokemon.fusionStrike:
+        fusionStrikePokemon.append(pokemon)
+        fusionStrikePokemonLocations.append({ 'location': 'bench', 'index': index })
+
+    choose = aiChoose(fusionStrikePokemon)
+
+    if choose == 0:
+      pokemon1Location = 'activePokemon'
+      pokemon1Index = None
+    else:
+      pokemon1Location = 'bench'
+      pokemon1Index = choose - 1
+
+    fusionStrikePokemon.pop(choose)
+    fusionStrikePokemonLocations.pop(choose)
+
+    pokemon2Location, pokemon2Index = elesasSparkleChooseSecondPokemon(game, player, fusionStrikePokemon, fusionStrikePokemonLocations)
+
+    return { 'pokemon1Location': pokemon1Location, 'pokemon1Index': pokemon1Index, 'pokemon2Location': pokemon2Location, 'pokemon2Index': pokemon2Index }
+
+  elif supporter.name == 'Iono' or supporter.name == 'Judge':
+    return { 'opponent': opponent }
+
+def playSupporter(game, player, opponent):
+  supporterCards = []
+  supporterCardIndexes = []
+
+  for index, card in enumerate(game.players[player].hand):
+    if card.cardType == CardType.Supporter:
+      supporterCards.append(card)
+      supporterCardIndexes.append(index)
+    
+  choose = aiChoose(supporterCards)
+
+  print(f'Your opponent plays Supporter {supporterCards[choose].name}.')
+
+  game.playSupporter(player, supporterCardIndexes[choose], determineSupporterEffectParams(game, player, opponent, supporterCards[choose].name))
+
+  return game
+
+def attachEnergyPickPokemon(game, player):
+  pokemon = []
+
+  pokemon.append(game.players[player].activePokemon)
+
+  for benchPokemon in game.players[player].bench:
+    pokemon.append(benchPokemon)
+
+  choose = aiChoose(pokemon)
+
+  if choose == 0:
+    return 'activePokemon', None
+  else:
+    return 'bench', choose - 1
+
+def attachEnergy(game, player):
+  energyCards = []
+  energyCardIndexes = []
+
+  for index, card in enumerate(game.players[player].hand):
+    if card.cardType == CardType.Energy:
+      energyCards.append(card)
+      energyCardIndexes.append(index)
+
+  choose = aiChoose(energyCards)
+
+  pokemonLocation, pokemonIndex = attachEnergyPickPokemon(game, player)
+
+  if pokemonLocation == 'activePokemon':
+    print(f'Your opponent attaches {energyCards[choose].name} to their Active Pokemon {game.players[player].activePokemon.name}.')
+  else:
+    print(f'Your opponent attaches {energyCards[choose].name} to their benched Pokemon {game.players[player].bench[pokemonIndex].name}.')
+
+  game.attachEnergy(player, energyCardIndexes[choose], pokemonLocation, pokemonIndex)
+
+  return game
+
+def determineStadiumEffectParams(game, player, opponent, stadium):
+  if stadium.name == 'Crystal Cave':
+    return None
+
+def useStadiumEffect(game, player, opponent):
+  if not game.players[player].stadium == None:
+    print(f'Your opponent uses Stadium {game.players[player].stadium.name}\'s effect.')
+  else:
+    print(f'Your opponent uses Stadium {game.players[opponent].stadium.name}\'s effect.')
+
+  effectParams = determineStadiumEffectParams(game, player, opponent, game.players[player].stadium)
+
+  game.useStadiumEffect(player, opponent, effectParams)
+
+  return game
+
+def determineToolEffectParams(game, player, opponent, tool):
+  if tool.name == 'Forest Seal Stone':
+    choose = aiChoose(game.players[player].deck)
+
+    print(f'Your opponent chooses to put {game.players[player].deck[choose].name} from their deck into their hand.')
+
+    return { 'deckCardIndex': choose }
+  
+  else:
+    raise Exception('invalid tool')
+
+def useToolEffect(game, player, opponent):
+  pokemonWithTools = []
+
+  if game.players[player].activePokemon.tool != None:
+    pokemonWithTools.append(game.players[player].activePokemon)
+
+  for pokemon in game.players[player].bench:
+    if pokemon.tool != None:
+      pokemonWithTools.append(pokemon)
+
+  choose = aiChoose(pokemonWithTools)
+
+  if choose == 0:
+    print(f'Your opponent uses the effect of the Tool {game.players[player].activePokemon.tool.name} attached 
+                to their Active Pokemon {game.players[player].activePokemon.name}.')
+  else:
+    print(f'Your opponent uses the effect of the Tool {game.players[player].bench[choose - 1].tool.name} attached 
+                to their benched Pokemon {game.players[player].bench[choose - 1].name}.')
+
+  if choose == 0:
+    effectParams = determineToolEffectParams(game, player, opponent, game.players[player].activePokemon.tool)
+
+    game.useToolEffect(player, opponent, effectParams, 'activePokemon')
+  else:
+    effectParams = determineToolEffectParams(game, player, opponent, game.players[player].bench[choose - 1].tool)
+
+    game.useToolEffect(player, opponent, effectParams, 'bench', choose - 1)
 
   return game
 

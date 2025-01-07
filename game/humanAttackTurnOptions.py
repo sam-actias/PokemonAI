@@ -858,7 +858,7 @@ def evolvePokemon(game, player, opponent):
     print('what?')
     return evolvePokemon(game, player, opponent)
 
-def battleVipPassSecondPokemon(game, player):
+def battleVipPassSecondPokemon(game, player, firstPokemonIndex):
   print('\nDo you want to pick a second Pokemon?')
 
   print('\nCommads:')
@@ -877,6 +877,9 @@ def battleVipPassSecondPokemon(game, player):
     if card.cardType == CardType.Pokemon and card.stage == Stage.Basic:
       basicPokemon.append(card)
       basicPokemonIndexes.append(index)
+
+  basicPokemon.pop(firstPokemonIndex)
+  basicPokemonIndexes.pop(firstPokemonIndex)
 
   print('\nPick a second Basic Pokemon from your deck.')
 
@@ -977,7 +980,7 @@ def ultraBallDiscardSecondCard(game, player, hand):
 
   if text[0] == 'details' and int(text[1]) < len(game.players[player].hand):
     printNonPokemonCard(game.players[player].hand[int(text[1])])
-    return determineItemEffectParams(game, player, opponent, item)
+    return ultraBallDiscardSecondCard(game, player, hand)
   elif text[0] == 'choose' and int(text[1]) < len(game.players[player].hand):
     discardCard2Index = int(text[1])
 
@@ -1156,7 +1159,7 @@ def determineItemEffectParams(game, player, opponent, item):
       if len(game.players[player].bench) == 5 or len(basicPokemon) == 1:
         return game
 
-      pokemon2Index = battleVipPassSecondPokemon(game, player)
+      pokemon2Index = battleVipPassSecondPokemon(game, player, int(text[1]))
 
       return { 'pokemon1Index': pokemon1Index, 'pokemon2Index': pokemon2Index }
     else:
@@ -1239,7 +1242,7 @@ def determineItemEffectParams(game, player, opponent, item):
       return determineItemEffectParams(game, player, opponent, item)
 
   elif item.name == 'Lost Vacuum':
-    print('\nPick a card from your hand to discard.')
+    print('\nPick a card from your hand to put into the Lost Zone.')
 
     for index, card in enumerate(game.players[player].hand):
       print(f'{index}   {card.name}')
@@ -1331,6 +1334,8 @@ def determineItemEffectParams(game, player, opponent, item):
 
     if len(game.players[opponent].bench) == 0:
       print('\nYour opponent has no benched Pokemon. Their Active Pokemon will stay in the Active Pokemon spot.')
+
+      opponentChosenIndex = None
     else:
       opponentChosenIndex = naiveAiChoose(game.players[opponent].bench)
 
@@ -1339,7 +1344,7 @@ def determineItemEffectParams(game, player, opponent, item):
     if len(game.players[player].bench) == 0:
       print('\nYou have no benched Pokemon. Your Active Pokemon will stay in the Active Pokemon spot. Escape Rope ends.')
 
-      return { 'opponentBenchIndex': opponentChosenIndex }
+      return { 'playerBenchIndex': None, 'opponentBenchIndex': opponentChosenIndex }
     else:
       playerPokemonIndex = escapeRopePlayerChoose(game, player, opponent, opponentChosenIndex)
 
@@ -1561,7 +1566,7 @@ def elesasSparkleChooseSecondPokemon(game, player, fusionStrikePokemon, fusionSt
       pokemon2Location = 'bench'
       pokemon2Index = int(text[1]) - 1
 
-    return pokemon1Location, pokemon1Index
+    return pokemon2Location, pokemon2Index
   else:
     print('what?')
     return elesasSparkleChooseSecondPokemon(game, player)
@@ -1666,7 +1671,7 @@ def playSupporter(game, player, opponent):
     printNonPokemonCard(supporterCards[int(text[1])])
     return playSupporter(game, player, opponent)
   elif text[0] == 'choose' and int(text[1]) < len(supporterCards):
-    game.playSupporter(player, supporterCardIndexes[int(text[1])])
+    game.playSupporter(player, supporterCardIndexes[int(text[1])], determineSupporterEffectParams(game, player, opponent, supporterCards[int(text[1])].name))
 
     return game
   else:
@@ -1733,7 +1738,7 @@ def attachEnergy(game, player):
   elif text[0] == 'choose' and int(text[1]) < len(energyCards):
     pokemonLocation, pokemonIndex = attachEnergyPickPokemon(game, player)
 
-    game.attachEnergy(player, energyCardIndexes[int(text[1]), pokemonLocation, pokemonIndex])
+    game.attachEnergy(player, energyCardIndexes[int(text[1])], pokemonLocation, pokemonIndex)
 
     return game
   else:
