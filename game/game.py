@@ -8,6 +8,7 @@ class Game:
     self.player1Name = playerName1
     self.player2Name = playerName2
     self.goesFirst = None
+    self.winner = None
     self.players = {
       playerName1: Player(player1Ai, MewsRevenge()),
       playerName2: Player(player2Ai, MewsRevenge())
@@ -68,12 +69,14 @@ class Game:
   
   def energyForAttackCheck(self, energyAttached, energyRequirement):
     energyRequirementKeys = energyRequirement.keys()
+    print(energyRequirementKeys)
+    print(energyRequirement)
 
     canDoMoveFlag = True
 
     countingDoubleTurboEnergyFlag = False
 
-    for key in energyRequirementKeys:
+    for key in list(energyRequirementKeys):
       for i in range(energyRequirement[key]):
         if energyAttached[key] > 0:
           energyAttached[key] -= 1
@@ -143,7 +146,7 @@ class Game:
         player2HasBasic = True
         break
 
-    if not player1HasBasic and not player2HasBasic:
+    if (not player1HasBasic) and (not player2HasBasic):
       for card in player1StartHand:
         self.players[self.player1Name].deck.append(card)
 

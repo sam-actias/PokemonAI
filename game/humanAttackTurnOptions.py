@@ -1,7 +1,7 @@
 from enums import CardType, EnergyType, Stage
-from pokemonTcg import printPokemon, printNonPokemonCard
 from cards import FusionStrikeEnergyFS244, DoubleTurboEnergyBS151
 from naiveAI import naiveAiChoose
+from printCards import printPokemon, printNonPokemonCard
 import random
 
 def energyMixPickPokemon(game, player, energyCardNames, energyCardIndexes, energyCardIndex):
@@ -717,8 +717,7 @@ def retreatPickABenchedPokemon(game, player):
 
 def retreat(game, player, opponent):
   if game.players[player].activePokemon.retreatCost > 0:
-    print(f'\nYou need to discard {game.players[player].activePokemon.retreatCost} energy card(s) 
-          from {game.players[player].activePokemon.name} in order to retreat.')
+    print(f'\nYou need to discard {game.players[player].activePokemon.retreatCost} energy card(s) from {game.players[player].activePokemon.name} in order to retreat.')
     
     energyToDiscard = []
 
@@ -1011,8 +1010,7 @@ def lostVacuumPickCard(game, player, opponent):
   print('\nOPPONENT\'S TOOLS')
 
   if game.players[opponent].activePokemon.tool != None:
-    print(f'{count}  {game.players[opponent].activePokemon.tool.name} 
-          (attached to Active Pokemon {game.players[opponent].activePokemon.name})')
+    print(f'{count}  {game.players[opponent].activePokemon.tool.name} (attached to Active Pokemon {game.players[opponent].activePokemon.name})')
     
     count += 1
     cardInfo.append({ 'lostZoneCardOwner': opponent, 'lostZoneCardStadium': False, 'lostZoneCardLocation': 'activePokemon' })
@@ -1028,8 +1026,7 @@ def lostVacuumPickCard(game, player, opponent):
   print('\nYOUR TOOLS')
 
   if game.players[player].activePokemon.tool != None:
-    print(f'{count}  {game.players[player].activePokemon.tool.name} 
-          (attached to Active Pokemon {game.players[player].activePokemon.name})')
+    print(f'{count}  {game.players[player].activePokemon.tool.name} (attached to Active Pokemon {game.players[player].activePokemon.name})')
 
     count += 1
     cardInfo.append({ 'lostZoneCardOwner': player, 'lostZoneCardStadium': False, 'lostZoneCardLocation': 'activePokemon' })
@@ -1039,8 +1036,7 @@ def lostVacuumPickCard(game, player, opponent):
       print(f'{count}  {pokemon.tool.name} (attached to Bench Pokemon {pokemon.name})')
 
       count += 1
-      cardInfo.append({ 'lostZoneCardOwner': player, 'lostZoneCardStadium': False, 
-                       'lostZoneCardLocation': 'bench', 'lostZoneCardIndex': index })
+      cardInfo.append({ 'lostZoneCardOwner': player, 'lostZoneCardStadium': False, 'lostZoneCardLocation': 'bench', 'lostZoneCardIndex': index })
       
   print('\nCommands:')
   print('details {x}: get card details')

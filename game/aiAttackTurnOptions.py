@@ -1,6 +1,6 @@
 from naiveAI import naiveAiChoose
 from enums import CardType, EnergyType, Stage
-from pokemonTcg import printPokemon
+from printCards import printPokemon
 import random
 
 aiChoose = naiveAiChoose
@@ -439,8 +439,7 @@ def retreatPickABenchedPokemon(game, player):
 
 def retreat(game, player, opponent):
   if game.players[player].activePokemon.retreatCost > 0:
-    print(f'\nYour opponent needs to discard {game.players[player].activePokemon.retreatCost} energy card(s) 
-          from {game.players[player].activePokemon.name} in order to retreat.')
+    print(f'\nYour opponent needs to discard {game.players[player].activePokemon.retreatCost} energy card(s) from {game.players[player].activePokemon.name} in order to retreat.')
     
     energyToDiscard = []
 
@@ -1085,11 +1084,9 @@ def useToolEffect(game, player, opponent):
   choose = aiChoose(pokemonWithTools)
 
   if choose == 0:
-    print(f'Your opponent uses the effect of the Tool {game.players[player].activePokemon.tool.name} attached 
-                to their Active Pokemon {game.players[player].activePokemon.name}.')
+    print(f'Your opponent uses the effect of the Tool {game.players[player].activePokemon.tool.name} attached to their Active Pokemon {game.players[player].activePokemon.name}.')
   else:
-    print(f'Your opponent uses the effect of the Tool {game.players[player].bench[choose - 1].tool.name} attached 
-                to their benched Pokemon {game.players[player].bench[choose - 1].name}.')
+    print(f'Your opponent uses the effect of the Tool {game.players[player].bench[choose - 1].tool.name} attached to their benched Pokemon {game.players[player].bench[choose - 1].name}.')
 
   if choose == 0:
     effectParams = determineToolEffectParams(game, player, opponent, game.players[player].activePokemon.tool)

@@ -3,12 +3,7 @@ from enums import Stage, EnergyType, CardType
 from naiveAI import naiveAiChoose
 from humanAttackTurnOptions import humanAttackTurnOptions
 from aiAttackTurnOptions import aiAttackTurnOptions
-
-def printNonPokemonCard(card):
-  # combine with print pokemon
-  print(f'\nName: {card.name}')
-  print(f'Card Type: {card.cardType}')
-  print(f'Text: {card.text}')
+from printCards import printPokemon, printNonPokemonCard
 
 def printGameBoard(game):
   print('\nSYLVIA')
@@ -40,10 +35,10 @@ def printGameBoard(game):
     print('none')
   print('\nYOUR HAND')
   for index, card in enumerate(game.players[game.player1Name].hand):
-    print(f'{game.players[game.player1Name].bench + len(game.players['SYLVIA'].bench) + index + 2}   {card.name}')
+    print(f'{len(game.players[game.player1Name].bench) + len(game.players['SYLVIA'].bench) + index + 2}   {card.name}')
 
 def doTurnOptionsAi(game, player, opponent):
-  turnOptions = determineTurnOptions(game, player, game.player1Name)
+  turnOptions = determineTurnOptions(game, player, game.player2Name)
 
   turnOptions.append('endTurn')
 
@@ -80,6 +75,8 @@ def gameBoardDetailOptions(game):
     gameBoardDetailOptions.append(card)
 
 def doTurnOptionsHuman(game, player, opponent):
+  printGameBoard(game)
+
   turnOptions = determineTurnOptions(game, player, game.player1Name)
 
   turnOptions.append('endTurn')
@@ -177,10 +174,12 @@ def determineTurnOptions(game, player, opponent):
       turnOptions.append('playTool')
     elif card.cardType == CardType.Supporter and game.players[player].canUseSupporterFlag and card.canPlay(game, player, opponent):
       turnOptions.append('playSupporter')
-    elif card.CardType == CardType.Energy and game.players[player].canAttachEnergy and card.canPlay(game, player, opponent):
+    elif card.cardType == CardType.Energy and game.players[player].canAttachEnergy and card.canPlay(game, player, opponent):
       turnOptions.append('attachEnergy')
 
-    if game.players[player].stadium.canUseEffect(game, player, opponent):
+    if game.players[player].stadium and game.players[player].stadium.canUseEffect(game, player, opponent):
+      turnOptions.append('useStadiumEffect')
+    elif game.players[opponent].stadium and game.players[opponent].stadium.canUseEffect(game, player, opponent):
       turnOptions.append('useStadiumEffect')
 
     if game.players[player].activePokemon.tool and game.players[player].activePokemon.tool.canUseAbility(game, player, opponent):
@@ -191,7 +190,7 @@ def determineTurnOptions(game, player, opponent):
         turnOptions.append('useToolAbility')
 
     for move in list(game.players[player].activePokemon.moves.keys()):
-      if (game.energyForAttackCheck(game.players[player].activePokemon.attachedEnergy, game.players[player].activePokemon.moves[move]) 
+      if (game.energyForAttackCheck(game.players[player].activePokemon.attachedEnergy, game.players[player].activePokemon.moves[move]['energyRequirement']) 
               and move['canDo'](game, player)):
         turnOptions.append(move)
 
@@ -204,10 +203,14 @@ def pickActivePokemon(game):
   availableBasicPokemon = []
   availableBasicPokemonIndexes = []
 
+  print(game.players[player1Name].hand)
+
   for index, card in enumerate(game.players[player1Name].hand):
     if card.cardType == CardType.Pokemon and card.stage == Stage.Basic:
       availableBasicPokemon.append(card)
       availableBasicPokemonIndexes.append(index)
+
+  print(availableBasicPokemon)
 
   for index, pokemon in enumerate(availableBasicPokemon):
     print(f'{index}   {pokemon.name}')
@@ -222,12 +225,12 @@ def pickActivePokemon(game):
 
   if text[0] == 'details':
     printPokemon(availableBasicPokemon[int(text[1])])
-    pickActivePokemon(game)
+    return pickActivePokemon(game)
   elif text[0] == 'pick':
     return availableBasicPokemonIndexes[int(text[1])]
   else:
     print('What?\n')
-    pickActivePokemon(game)
+    return pickActivePokemon(game)
 
 def pickBenchPokemon(game):
   availableBasicPokemon = []
@@ -274,51 +277,6 @@ def pickBenchPokemon(game):
   else:
     print('What?\n')
     pickBenchPokemon(game)
-
-def printPokemon(pokemon):
-  print(f'\nName: {pokemon.name}')
-  print('Card Type: Pokemon')
-  print(f'Stage: {pokemon.stage.name}')
-  if pokemon.evolvesFrom:
-    print(f'Evolves From: {pokemon.evolvesFrom}')
-  print(f'Current HP: {pokemon.hp}')
-  print(f'Max HP: {pokemon.startHp}')
-  print(f'Type: {pokemon.type.name}')
-  if pokemon.weakness:
-    print(f'Weakness: {pokemon.weakness.name} x{pokemon.weaknessFactor}')
-  if pokemon.resistance:
-    print(f'Resistance: {pokemon.resistance.name} -{pokemon.resistanceFactor}')
-  print(f'Retreat Cost: {pokemon.retreatCost}')
-  if pokemon.hasRuleBox:
-    print('Rule Box: Yes')
-  print(f'Prizes When Knocked Out: {pokemon.prizesWhenKnockedOut}')
-  if pokemon.isV:
-    print('V: yes')
-  if pokemon.fusionStrike:
-    print('Fusion Strike: Yes')
-  if pokemon.ability:
-    print(f'Ability Name: {pokemon.ability['name']}')
-    print(f'Ability Text: {pokemon.ability['text']}')
-  for moveKey in list(pokemon.moves.keys()):
-    print(f'Move Name: {pokemon.moves[moveKey]['name']}')
-    if pokemon.moves[moveKey]['energyRequirement'][EnergyType.Colorless]:
-      print(f'Required Energy Colorless: {pokemon.moves[moveKey]['energyRequirement'][EnergyType.Colorless]}')
-    if pokemon.moves[moveKey]['energyRequirement'][EnergyType.Psychic]:
-      print(f'Required Energy Psychic: {pokemon.moves[moveKey]['energyRequirement'][EnergyType.Psychic]}')
-    if pokemon.moves[moveKey]['energyRequirement'][EnergyType.Metal]:
-      print(f'Required Energy Metal: {pokemon.moves[moveKey]['energyRequirement'][EnergyType.Metal]}')
-    if pokemon.moves[moveKey]['energyRequirement'][EnergyType.Fire]:
-      print(f'Required Energy Fire: {pokemon.moves[moveKey]['energyRequirement'][EnergyType.Fire]}')
-    print(f'Move Text: {pokemon.moves[moveKey]['text']}')
-  if pokemon.attachedEnergy[EnergyType.FusionStrikeEnergy]:
-    print(f'Attached Energy Fusion Strike: {pokemon.attachedEnergy[EnergyType.FusionStrikeEnergy]}')
-  if pokemon.attachedEnergy[EnergyType.DoubleTurboEnergy]:
-    print(f'Attached Energy Double Turbo: {pokemon.attachedEnergy[EnergyType.DoubleTurboEnergy]}')
-  if pokemon.attachedEnergy[EnergyType.Water]:
-    print(f'Attached Energy Water: {pokemon.attachedEnergy[EnergyType.Water]}')
-  if pokemon.tool:
-    print(f'Tool Name: {pokemon.tool.name}')
-    print(f'Tool Text: {pokemon.tool.text}')
 
 player2Name = 'SYLVIA'
 
@@ -382,3 +340,15 @@ for i in range(5):
   game.players[player1Name].bench.append(game.players[player1Name].hand.pop(pickedPokemonIndex))
 
 printGameBoard(game)
+
+while game.winner == None:
+  doTurn(game)
+
+if game.winner == game.player1Name:
+  print(f'\nCongratulations {player1Name}! You won!')
+elif game.winner == game.player2Name:
+  print(f'\nI won! Better luck next time {player1Name}!')
+elif game.winner == 'tie':
+  print('It\'s a tie!')
+else:
+  raise Exception('invalid win state!')

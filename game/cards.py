@@ -25,6 +25,7 @@ class MewVmaxFS268:
     self.paralyzed = False
     self.confused = False
     self.asleep = False
+    self.ability = {}
     self.moves = {
       'crossFusionStrike': {
         'name': 'Cross Fusion Strike',
@@ -79,16 +80,18 @@ class MewVmaxFS268:
 
     # no damage effects on this attack from effects on opponent's active Pokemon
 
+    print('Max Miracle does 130 damage.')
+
     game.players[opponent].activePokemon.hp -= game.activePokemonAttackChecks(player, opponent, 130, True)
 
     return game
   
-  def canDoMaxMiracle():
+  def canDoMaxMiracle(self, game, player):
     return True
   
 class MewVFS250:
   def __init__(self):
-    self.cardType = CardType.Energy
+    self.cardType = CardType.Pokemon
     self.name = 'Mew V'
     self.stage = Stage.Basic
     self.hp = 180
@@ -111,6 +114,7 @@ class MewVFS250:
     self.paralyzed = False
     self.confused = False
     self.asleep = False
+    self.ability = {}
     self.moves = {
       'energyMix': {
         'name': 'Energy Mix',
@@ -164,13 +168,15 @@ class MewVFS250:
       
     return game
   
-  def canDoEnergyMix(game, player):
+  def canDoEnergyMix(self, game, player):
     return True
       
   def psychicLeap(self, game, player, opponent, shuffleIn, newActivePokemonIndex = None):
     if not game.energyForAttackCheck(game.players[player].activePokemon.attachedEnergy, self.moves['psychicLeap']['energyRequirement']):
       raise Exception('Not enough energy for move Psychic Leap')
     # provide a shuffleIn boolean
+
+    print('Psychic Leap does 70 damage.')
 
     game.players[opponent].activePokemon.hp -= game.activePokemonAttackChecks(player, opponent, 70)
 
@@ -218,7 +224,7 @@ class MewVFS250:
     
     return game
   
-  def canDoPsychicLeap():
+  def canDoPsychicLeap(self, game, player):
     return True
   
 class GenesectVFS255:
@@ -297,7 +303,7 @@ class GenesectVFS255:
     
     raise Exception("Cannot use ability Fusion Strike System while Path To The Peak is the stadium in play")
   
-  def canDoFusionStrikeSystem(game, player):
+  def canDoFusionStrikeSystem(self, game, player):
     fusionStrikePokemonAmt = 0
 
     if game.players[player].activePokemon.fusionStrike:
@@ -317,6 +323,8 @@ class GenesectVFS255:
       raise Exception('Not enough energy for move Techno Blast')
     
     if game.players[player].activePokemonCantAttack == 0:
+      print('Techno Blast does 210 damage.')
+
       game.players[opponent].activePokemon.hp -= game.activePokemonAttackChecks(player, opponent, 210)
 
       game.players[player].activePokemonCantAttack = 2
@@ -325,7 +333,7 @@ class GenesectVFS255:
     
     return game
   
-  def canDoTechnoBlast():
+  def canDoTechnoBlast(self, game, player):
     return True
     
 class MeloettaFS124:
@@ -353,6 +361,7 @@ class MeloettaFS124:
     self.paralyzed = False
     self.confused = False
     self.asleep = False
+    self.ability = {}
     self.moves = {
       'melodiouEcho': {
         'name': 'Melodious Echo',
@@ -384,11 +393,13 @@ class MeloettaFS124:
     for pokemon in game.players[player].bench:
       fusionStrikeEnergyAmt += pokemon.attachedEnergy[EnergyType.FusionStrikeEnergy]
 
+    print(f'Melodious Echo does {70 * fusionStrikeEnergyAmt} damage.')
+
     game.players[opponent].activePokemon.hp -= game.activePokemonAttackChecks(player, opponent, 70 * fusionStrikeEnergyAmt)
 
     return game
   
-  def canDoMelodiousEcho():
+  def canDoMelodiousEcho(self, game, player):
     return True
 
 class OricorioFS42:
@@ -418,7 +429,7 @@ class OricorioFS42:
     self.asleep = False
     self.ability = {
       'name': 'Lesson In Zeal',
-      'canDo': self.canDoLessonInZeal(),
+      'canDo': self.canDoLessonInZeal,
       'text': 'All of your Fusion Strike Pokémon take 20 less damage from attacks from your opponent\'s Pokémon (after applying Weakness and Resistance). You can\'t apply more than 1 Lesson in Zeal Ability at a time.'
     }
     self.moves = {
@@ -441,7 +452,7 @@ class OricorioFS42:
       EnergyType.Water: 0
     }
 
-  def canDoLessonInZeal():
+  def canDoLessonInZeal(self, game, player):
     return False
 
   def glisteningDroplets(self, game, player, opponent, howToPutDamageCounters):
@@ -455,13 +466,17 @@ class OricorioFS42:
 
     for howTo in howToPutDamageCounters:
       if howTo.pokemonLocation == "activePokemon":
+        print(f'Glistening Droplets does 10 damage to {game.players[opponent].activePokemon.name}.')
+
         game.players[opponent][howTo.pokemonLocation].hp -= 10
       else:
+        print(f'Glistening Droplets does 10 damage to {game.players[opponent].bench[howTo.pokemonIndex].name}.')
+
         game.players[opponent][howTo.pokemonLocation][howTo.pokemonIndex].hp -= 10
 
     return game
   
-  def canDoGlisteningDroplets():
+  def canDoGlisteningDroplets(self, game, player):
     return True
   
 class BosssOrdersGhetsisPE265:
@@ -676,6 +691,8 @@ class CrystalCaveES230:
     if game.players[player].canPlayStadiumFlag and (game.players[player].stadium == None or 
                                                 game.players[player].stadium.name != self.name): 
       return True
+    
+    return False
 
 class PathToThePeakCR148:
   def __init__(self):
